@@ -9,19 +9,22 @@ start: debut
 
 _css
 	```css
+    @import url("https://fonts.googleapis.com/css2?family=PT+Serif:ital,wght@0,400;0,700;1,400;1,700&display=swap");
     body {
-        background-color:rgb(49, 43, 32);
+        background-color:rgb(45, 43, 40);
         color: white;
-        font-family: serif;
-        font-size: 1.4rem;
+        font-family: "PT Serif", serif;
+        font-size: 1.2rem;
         line-height: 1.5;
     }
     a {
-        color:rgb(255, 174, 0);
+        color:rgb(255, 238, 48);
         text-decoration: none;
     }
     a:hover {
         text-decoration: underline;
+        text-decoration-color: currentColor;
+        text-underline-offset: 0.22em;
     }
 	main {
 		max-width: 42rem;
@@ -33,7 +36,7 @@ debut
 
     "Ma reine, l'armée de Cylian a pénétré le château. Quels sont vos ordres ?"
 
-    (set: souvenir false)
+    (set: souvenir true)
 
         (ifnotyet)([Lentement se servir du thé](thé))
         (ifnotyet)([Regarder vos sujets](sujets))
