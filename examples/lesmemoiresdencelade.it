@@ -39,11 +39,9 @@ debut
 
     "Ma reine, l'armée de Cylian a pénétré le château. Quels sont vos ordres ?"
 
-
-
         (ifnotyet)([Lentement se servir du thé](thé))
         (ifnotyet)([Regarder vos sujets](sujets))
-        [Faire du discours](discours)
+        [Faire un discours](discours)
 
 reposer
     Vous vous reposez sur votre trône.
@@ -95,7 +93,7 @@ pargot
 gontrant
     (set:sujet++)
     Et puis tous les autres. Les vieillards qui se sont regroupés dans la salle du trône, les enfants, les gardes les plus jeunes. Ha oui et bien sûr, celui qui s'était en premier porté volontaire pour rester avec celles et ceux à protéger : le **Duc Gontrant de Batis'Delia**...
-    
+
         (ifnotyet)([Dame Pargot](pargot))
         (ifnotyet)([Duc Gontrant](gontrant))
         (ifnotyet)([Elphée](elphee))
@@ -105,20 +103,42 @@ discours
     (clear)
     Vous vous levez et vous vous dirigez vers eux.
     
-    "Chers amis, je suis fière de vous. 
+    "Chers amis, je suis fière de vous. Vous avez rendu le royaume des Asterales fiers. Mais cela n'a pas s..."
+
+    ## CLAC   
+
+        [Vous vous retournez avec effroi.](effroi)
+
+effroi
+    Vous vous retournez avec effroi.
     
+    Dans l'entrebaillement de la porte, une épée de flamme à la main :
+    **Kerner Kernes** se détache de l'ombre. Le général de l'armée de Cylian, recouvert du sang de vos sujets, s'approche et vous menace de la pointe de son arme.
+
+    "Ne vous inquiétez pas, ça sera rapide."
 
 
-magnum_start
-    C'était la seconde fois de sa vie que Magnum était enchaîné. La première fois, il était sur un autre continent, en mission spéciale pour la Reine Prunelle. À l'époque, en pleine force de ses 20 ans, il n'imaginais pas d'autres issues que de réussir à se libérer de ses liens, accourir au secours de ses compagnons d'armes et disparaître dans la nuit au damn de ces soldats Cylians. 
 
+    *Tout espoir semblait disparu. Mais à quelques mètres, dans un couloir du château, un homme allait changer le destin de ces deux royaumes.*
+
+        [Qui ?](magnard_start)
+
+magnard_start
+    (clear)
+    C'était la seconde fois de sa vie que Magnard était enchaîné. La première fois, il était sur un autre continent, en mission spéciale pour la Reine.
+    
+    À l'époque, en pleine force de ses 20 ans, il n'imaginais pas d'autres issues que de réussir à se libérer de ses liens, accourir au secours de ses compagnons d'armes et disparaître dans la nuit au damn de ces soldats Cylians. 
+
+        [suite](magnard_suite)
+
+magnard_suite
     40 ans plus tard, il ne voyait plus non plus d'issue. Venus par milliers, les Cylians avaient traversé les campagnes du royaume des Asterales. Ils avaient pillés, brûlé les terres, de sorte à ce que si ils ne mourraient pas d'une lame, ils pourraient de faim. 
 
-    Magnum contemplait : l'espoir disparu, le futur sombre pour son royaume, tout ce qu'il ne pourra jamais vivre, Elphée. 
+    Magnard contemplait : l'espoir disparu, le futur sombre pour son royaume, tout ce qu'il ne pourra jamais vivre, Elphée. 
 
         [Elphée...](penser_elphee)
 
 penser_elphee
     "Elphée..."
 
-    Sa femme. Ils se sont rencontrés jeunes, il n'était qu'un écuyer. Alphi était cachée dans les appartements de la Reine, combien de temps avant qu'ils ne la trouvent ? 
+    Sa femme. Ils se sont rencontrés jeunes, il n'était qu'un écuyer. Elphée était cachée dans les appartements de la Reine, combien de temps avant qu'ils ne la trouvent ? 

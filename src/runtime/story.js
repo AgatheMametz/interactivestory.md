@@ -18,6 +18,42 @@
   const optionsNav = document.getElementById("options");
   const aboutPanel = document.getElementById("about-panel");
   const varsPanel = document.getElementById("vars-panel");
+  const varsDetails = varsPanel && varsPanel.closest("details");
+
+  const VARS_OPEN_COOKIE = "interactivestory_vars_open";
+  const VARS_OPEN_MAX_AGE = 365 * 24 * 60 * 60;
+
+  function readVarsDetailsOpenCookie() {
+    const prefix = `${VARS_OPEN_COOKIE}=`;
+    for (const part of document.cookie.split("; ")) {
+      if (part.startsWith(prefix)) {
+        const v = part.slice(prefix.length);
+        if (v === "1") return true;
+        if (v === "0") return false;
+      }
+    }
+    return null;
+  }
+
+  function writeVarsDetailsOpenCookie(open) {
+    const path =
+      typeof location !== "undefined" && location.pathname
+        ? location.pathname
+        : "/";
+    const secure =
+      typeof location !== "undefined" && location.protocol === "https:"
+        ? "; Secure"
+        : "";
+    document.cookie = `${VARS_OPEN_COOKIE}=${open ? "1" : "0"}; path=${path}; max-age=${VARS_OPEN_MAX_AGE}; SameSite=Lax${secure}`;
+  }
+
+  if (varsDetails) {
+    const savedOpen = readVarsDetailsOpenCookie();
+    if (savedOpen !== null) varsDetails.open = savedOpen;
+    varsDetails.addEventListener("toggle", () => {
+      writeVarsDetailsOpenCookie(varsDetails.open);
+    });
+  }
 
   function escapeHtml(s) {
     return String(s)
