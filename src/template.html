@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Story</title>
+    <style>
+      :root {
+        font-family: system-ui, sans-serif;
+        line-height: 1.5;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      main {
+        flex: 1;
+        max-width: 40rem;
+        margin: 0 auto;
+        padding: 1rem;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      #options ul {
+        list-style: none;
+        padding: 0;
+        margin: 1.5rem 0 0;
+      }
+      #options a {
+        display: inline-block;
+        margin: 0.25rem 0;
+      }
+      footer {
+        border-top: 1px solid #ddd;
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+      }
+      details summary {
+        cursor: pointer;
+      }
+      /* {{EXTRA_CSS}} */
+    </style>
+  </head>
+  <body>
+    <main>
+      <div id="chronicle" aria-live="polite"></div>
+      <nav id="options" aria-label="Choix"></nav>
+    </main>
+    <footer>
+      <details>
+        <summary>About this story</summary>
+        <div id="about-panel"></div>
+      </details>
+    </footer>
+    <script type="application/json" id="story-data">{{STORY_JSON}}</script>
+    <script>
+      {{MARKED_LIB}}
+    </script>
+    <script>
+      {{RUNTIME}}
+    </script>
+  </body>
+</html>
