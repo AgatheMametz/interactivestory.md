@@ -33,7 +33,7 @@ function readMarkedUmd() {
 
 const mdPath = process.argv[2];
 if (!mdPath) {
-  console.error("Usage: node scripts/build.mjs <story.md>");
+  console.error("Usage: node scripts/build.mjs <fichier.it|fichier>");
   process.exit(1);
 }
 

@@ -1,12 +1,16 @@
 # interactivestory.md
 
-Histoires en Markdown → une page HTML autonome (runtime + données inlinés).
+Histoires au format **`.it`** (indentation + YAML) → une page HTML autonome (runtime + données inlinés).
 
 ## Format
 
-- **Front matter YAML** : `title`, `version`, `author`, `email`, `link`, optionnel `start` (id du node d’entrée ; défaut = premier `#` du fichier).
-- **`## css`** puis bloc ` ```css ` … ` ``` ` : styles ajoutés au gabarit.
-- **Nodes** : titre `# id_du_node`, corps en Markdown, puis `## options` et liens `[libellé](id_cible)`.
+- **Fichier source** : extension recommandée **`.it`** (évite d’être ouvert comme Markdown `.md`).
+
+- **Front matter YAML** : `title`, `version`, `author`, `email`, `link`, optionnel `start` (id du passage de départ ; défaut = premier passage du fichier, hors `_css`).
+- **Passages (indentation)** : une ligne **sans indentation** en tête de colonne = **id du passage** (pas de `#`). Toutes les lignes suivantes **indentées** (tab ou espaces) font partie du passage jusqu’au prochain titre de colonne 0. Les **lignes vides** à l’intérieur d’un passage sont conservées (elles ne ferment pas le bloc).
+- **Séparateur `--`** : une ligne indentée dont le contenu après trim est exactement `--` sépare le **corps** (texte qui reste dans la chronique) de la **zone d’options** (remplacée à chaque navigation vers un nouveau passage). Même règle d’indentation ; le `--` est au même niveau que le corps.
+- **Styles** : passage réservé `_css` en titre, puis bloc indenté contenant un fence ` ```css ` … ` ``` ` (injecté dans le HTML). Ce passage n’est pas jouable.
+- **Options** : sous le `--`, markdown avec liens `[libellé](id_passage)` comme avant.
 
 ## Marqueurs (dans le corps d’un node)
 
@@ -14,15 +18,21 @@ Histoires en Markdown → une page HTML autonome (runtime + données inlinés).
 - `(set: nom++)` / `(set: nom--)` — réservé aux nombres.
 - **Ternaire** : `(if: variable = valeur ; texteSiVrai ; texteSiFaux)` — égalité stricte (avec coercition légère nombre / chaîne comme dans le runtime). Les deux branches peuvent contenir du Markdown ; éviter `;` non protégés dans un segment (utiliser des guillemets si besoin).
 - **Ternaire ifnot** : `(ifnot: variable = valeur ; texteSiDifferent ; texteSiEgal)` — première branche si `variable ≠ valeur`, sinon seconde.
-- **Lien conditionnel vers un node** : `(if: condition)(id_node)` et `(ifnot: condition)(id_node)` — si la condition est vraie / fausse, insère un lien vers `id_node` (libellé = id du node).
+- **Lien conditionnel** : `(if: condition)(…)` ou `(ifnot: condition)(…)` — le second bloc est un **fragment Markdown libre** (texte, `**gras**`, liens `[libellé](id_node)`, marqueurs imbriqués `(set:…)` / `(if:…)`, etc.). S’il ne reste qu’un seul id de node (sans espace ni lien), il est traité comme `[id](id)`.
 
-**Conditions** (formes `if` / `ifnot` avec `(…)(node)`) : soit `variable = valeur`, soit un nom de variable seul (vérité « truthy » : pas `false`, pas `0`, pas `""`, pas `undefined`).
+- **Variables dans le texte** : `{{nomVariable}}` est remplacé par la valeur courante (chaîne) après marqueurs, avant rendu Markdown.
+
+**Conditions** (dans `(if:…)(…)` / `(ifnot:…)(…)`) : `variable = valeur` ; raccourci `variable valeur` (littéral `true` / `false` / nombre / mot sans espace) ; ou un seul identifiant (truthy).
 
 ## Build
 
 ```bash
 npm install
-npm run build -- examples/sample.story.md
+npm run build -- examples/sample.it
 ```
 
 Sortie : `dist/<slug-du-title>.html` (slug dérivé de `title`).
+
+## Coloration dans Cursor / VS Code
+
+Une extension locale dans [`vscode-interactivestory/`](vscode-interactivestory/) enregistre le langage **interactivestory** pour les fichiers **`.it`**. **Cursor** n’a souvent pas la commande « Install from Location » : empaqueter avec `npm run package` dans ce dossier, puis **Cmd+Shift+P** → chercher **vsix** → **Install from VSIX**. Détail dans [`vscode-interactivestory/README.md`](vscode-interactivestory/README.md).

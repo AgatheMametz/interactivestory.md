@@ -1,0 +1,36 @@
+{
+  "name": "interactivestory-md",
+  "displayName": "Interactive Story (.it)",
+  "description": "Coloration pour les passages indentés, le séparateur -- et le front matter YAML.",
+  "version": "0.2.0",
+  "publisher": "interactivestory",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AgatheMametz/interactivestory.md"
+  },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": ["Programming Languages"],
+  "scripts": {
+    "package": "npx --yes @vscode/vsce@latest package --no-dependencies --allow-missing-repository"
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "interactivestory",
+        "aliases": ["Interactive Story", "interactivestory"],
+        "extensions": [".it"],
+        "configuration": "./language-configuration.json",
+        "firstLine": "^---\\s*$"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "interactivestory",
+        "scopeName": "source.interactivestory",
+        "path": "./syntaxes/interactivestory.tmLanguage.json"
+      }
+    ]
+  }
+}

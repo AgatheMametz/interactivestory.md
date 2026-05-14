@@ -56,7 +56,28 @@
       const lit = parseLiteral(eq[2].trim());
       return valuesEqual(vars[name], lit);
     }
+    const shorthand = /^(\w+)\s+(\S+)$/.exec(e);
+    if (shorthand) {
+      return valuesEqual(vars[shorthand[1]], parseLiteral(shorthand[2]));
+    }
     return truthy(vars[e]);
+  }
+
+  /** Affiche la valeur d’une variable dans le markdown (corps, ternaires, blocs binaires). */
+  function expandVars(s) {
+    return s.replace(/\{\{(\w+)\}\}/g, (_, name) => {
+      const v = vars[name];
+      if (v === undefined || v === null) return "";
+      return String(v);
+    });
+  }
+
+  /** Si le fragment est uniquement un id de node connu, en faire un lien Markdown. */
+  function ensureStoryLinkIfBareNodeId(fragment) {
+    const t = fragment.trim();
+    if (!t || /[\s\[\]()]/.test(t)) return fragment;
+    if (nodes[t]) return `[${t}](${t})`;
+    return fragment;
   }
 
   function applySet(inner) {
@@ -129,7 +150,7 @@
     return null;
   }
 
-  function replaceConditionalMarkers(s) {
+  function replaceConditionalMarkers(s, depth) {
     let out = s;
     let pos = 0;
     let guard = 0;
@@ -166,14 +187,18 @@
           continue;
         }
         replaceEnd = blk2.end;
-        const nodeId = blk2.inner.trim();
         const cond = parsed.body;
-        if (parsed.kind === "if") {
-          if (evalCondition(cond) && nodes[nodeId]) {
-            replacement = `<a href="#" class="story-goto" data-node="${escapeAttr(nodeId)}">${escapeHtml(nodeId)}</a>`;
+        const innerRaw = blk2.inner.trim();
+        const take =
+          parsed.kind === "if" ? evalCondition(cond) : !evalCondition(cond);
+        if (take) {
+          if (depth >= 12) {
+            replacement = "";
+          } else {
+            replacement = ensureStoryLinkIfBareNodeId(
+              processMarkers(innerRaw, depth + 1),
+            );
           }
-        } else if (!evalCondition(cond) && nodes[nodeId]) {
-          replacement = `<a href="#" class="story-goto" data-node="${escapeAttr(nodeId)}">${escapeHtml(nodeId)}</a>`;
         }
       } else {
         const parts = splitThreeBySemicolons(parsed.body);
@@ -186,10 +211,11 @@
           pos = openIdx + 1;
           continue;
         }
-        if (parsed.kind === "if") {
-          replacement = eq ? parts[1] : parts[2];
+        const branch = parsed.kind === "if" ? (eq ? parts[1] : parts[2]) : !eq ? parts[1] : parts[2];
+        if (depth >= 12) {
+          replacement = "";
         } else {
-          replacement = !eq ? parts[1] : parts[2];
+          replacement = processMarkers(branch, depth + 1);
         }
       }
 
@@ -199,7 +225,8 @@
     return out;
   }
 
-  function processMarkers(md) {
+  function processMarkers(md, depth = 0) {
+    if (depth > 12) return md;
     let out = md;
     const setRe = /\(set:\s*([^)]+)\)/g;
     let m;
@@ -210,8 +237,8 @@
       out = out.split(st.raw).join("");
     }
 
-    out = replaceConditionalMarkers(out);
-    return out;
+    out = replaceConditionalMarkers(out, depth);
+    return expandVars(out);
   }
 
   marked.use({

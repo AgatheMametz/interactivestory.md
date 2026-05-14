@@ -1,0 +1,44 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "interactivestory",
+  "scopeName": "source.interactivestory",
+  "patterns": [
+    {
+      "begin": "\\A(---)\\s*\\n",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.tag.begin.yaml" }
+      },
+      "end": "^(---)\\s*$",
+      "endCaptures": {
+        "1": { "name": "punctuation.definition.tag.end.yaml" }
+      },
+      "contentName": "meta.embedded.block.frontmatter",
+      "patterns": [{ "include": "source.yaml" }]
+    },
+    {
+      "match": "^([\\t ]*)(--)(\\s*)$",
+      "captures": {
+        "1": { "name": "punctuation.whitespace.interactivestory" },
+        "2": { "name": "keyword.operator.interactivestory" },
+        "3": { "name": "punctuation.whitespace.interactivestory" }
+      }
+    },
+    {
+      "begin": "^([\\t ]+)(?!(--)\\s*$)",
+      "end": "$",
+      "beginCaptures": {
+        "1": { "name": "punctuation.whitespace.interactivestory" }
+      },
+      "contentName": "meta.embedded.line.markdown.interactivestory",
+      "patterns": [{ "include": "text.html.markdown" }]
+    },
+    {
+      "match": "^(?!^--$)([^\\s\\t#][^\\n]*)$",
+      "name": "entity.name.function.interactivestory"
+    },
+    {
+      "match": "^\\s+$",
+      "name": "string.interactivestory.whitespace"
+    }
+  ]
+}

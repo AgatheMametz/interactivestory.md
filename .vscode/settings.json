@@ -1,0 +1,5 @@
+{
+  "files.associations": {
+    "**/*.it": "interactivestory"
+  }
+}

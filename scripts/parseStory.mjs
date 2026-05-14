@@ -1,79 +1,124 @@
 import matter from "gray-matter";
 
-const H1 = /^#\s+(.+)$/m;
-const H1_NOSPACE = /^#([^\s#].*)$/m;
-const OPTIONS_HEADING = /^##\s+options\s*$/im;
-const CSS_HEADING = /^##\s+css\s*$/im;
-const FENCED_CSS = /^```css\s*\n([\s\S]*?)\n```\s*$/m;
+const RESERVED_CSS_ID = "_css";
 
-function stripCssSection(md) {
-  const m = md.match(CSS_HEADING);
-  if (!m) return { css: "", rest: md };
-  const after = md.slice(m.index + m[0].length);
-  const fence = after.match(FENCED_CSS);
-  if (!fence) return { css: "", rest: md };
-  const css = fence[1].trim();
-  const rest =
-    md.slice(0, m.index).trimEnd() +
-    "\n\n" +
-    after.slice(fence.index + fence[0].length).trimStart();
-  return { css, rest: rest.trim() };
+/** Plus court préfixe commun en espaces / tabs (longueur brute). */
+function dedentLineBlock(lines) {
+  const nonempty = lines.filter((l) => l.trim());
+  if (nonempty.length === 0) return "";
+  let min = Infinity;
+  for (const line of nonempty) {
+    const m = line.match(/^[\t ]+/);
+    const n = m ? m[0].length : 0;
+    if (n < min) min = n;
+  }
+  if (!Number.isFinite(min) || min === 0) {
+    return lines.join("\n").trimEnd();
+  }
+  return lines
+    .map((l) => {
+      if (!l.trim()) return "";
+      const m = l.match(/^[\t ]+/);
+      const n = m ? m[0].length : 0;
+      return n >= min ? l.slice(min) : l.trimStart();
+    })
+    .join("\n")
+    .trimEnd();
 }
 
-function splitByH1(md) {
-  const lines = md.split(/\r?\n/);
-  const chunks = [];
-  let i = 0;
-  while (i < lines.length) {
-    const line = lines[i];
-    const mSpace = line.match(/^#\s+(.+)$/);
-    const mNo = line.match(/^#([^\s#].*)$/);
-    const title = mSpace?.[1]?.trim() ?? (mNo && !line.startsWith("##") ? mNo[1].trim() : null);
-    if (title == null) {
-      i += 1;
-      continue;
+function splitBodyAndOptions(rawLines) {
+  let sep = -1;
+  for (let j = 0; j < rawLines.length; j++) {
+    if (rawLines[j].trim() === "--") {
+      sep = j;
+      break;
     }
-    const id = title;
-    i += 1;
-    const bodyLines = [];
-    while (i < lines.length) {
-      const l = lines[i];
-      if (/^#\s/.test(l) || /^#[^\s#]/.test(l)) break;
-      bodyLines.push(l);
-      i += 1;
-    }
-    chunks.push({ id, raw: bodyLines.join("\n").trimEnd() });
   }
-  return chunks;
+  if (sep === -1) {
+    return { bodyLines: rawLines, optLines: [] };
+  }
+  return {
+    bodyLines: rawLines.slice(0, sep),
+    optLines: rawLines.slice(sep + 1),
+  };
 }
 
-function parseNodeBody(raw) {
-  const m = raw.match(OPTIONS_HEADING);
-  if (!m) {
-    return { bodyMd: raw.trim(), options: [] };
-  }
-  const bodyMd = raw.slice(0, m.index).trim();
-  const optMd = raw.slice(m.index + m[0].length).trim();
+function parseOptionsMarkdown(optMd) {
   const options = [];
   const linkRe = /\[([^\]]*)\]\(([^)]+)\)/g;
   let lm;
   while ((lm = linkRe.exec(optMd)) !== null) {
     options.push({ label: lm[1].trim(), target: lm[2].trim() });
   }
-  return { bodyMd, options };
+  return options;
+}
+
+function extractCssFence(bodyMd) {
+  const m = bodyMd.match(/```css\s*\n([\s\S]*?)\n```/);
+  return m ? m[1].trim() : "";
+}
+
+/**
+ * Après front matter : passages délimités par une ligne « titre » (sans indentation).
+ * Sous chaque titre : lignes indentées ; une ligne ne contenant que `--` sépare
+ * le corps (chronique) de la zone remplacée à chaque changement de node (options).
+ */
+function splitIndentedPassages(md) {
+  const lines = md.split(/\r?\n/);
+  const chunks = [];
+  let i = 0;
+  while (i < lines.length) {
+    while (i < lines.length && !lines[i].trim()) i++;
+    if (i >= lines.length) break;
+    const line = lines[i];
+    if (/^[\t ]/.test(line)) {
+      i += 1;
+      continue;
+    }
+    const id = line.trim();
+    i += 1;
+    const rawLines = [];
+    while (i < lines.length) {
+      const l = lines[i];
+      if (!l.trim()) {
+        rawLines.push(l);
+        i += 1;
+        continue;
+      }
+      if (!/^[\t ]/.test(l)) break;
+      rawLines.push(l);
+      i += 1;
+    }
+    chunks.push({ id, rawLines });
+  }
+  return chunks;
 }
 
 export function parseStoryMarkdown(fileContent) {
   const { data, content: rawContent } = matter(fileContent);
-  const { css, rest } = stripCssSection(rawContent.trim());
-  const chunks = splitByH1(rest);
+  const rest = rawContent.trim();
+  const chunks = splitIndentedPassages(rest);
+
+  let css = "";
   const nodes = {};
   const order = [];
+
   for (const ch of chunks) {
-    const { bodyMd, options } = parseNodeBody(ch.raw);
+    if (ch.id === RESERVED_CSS_ID) {
+      const bodyMd = dedentLineBlock(ch.rawLines);
+      css = extractCssFence(bodyMd);
+      continue;
+    }
+
+    const { bodyLines, optLines } = splitBodyAndOptions(ch.rawLines);
+    const bodyMd = dedentLineBlock(bodyLines);
+    const optMd = dedentLineBlock(optLines);
+    const options = parseOptionsMarkdown(optMd);
+
     nodes[ch.id] = { bodyMd, options };
     order.push(ch.id);
   }
+
   const meta = {
     title: data.title ?? "Untitled",
     version: data.version ?? "",
@@ -86,7 +131,7 @@ export function parseStoryMarkdown(fileContent) {
     throw new Error(
       meta.start
         ? `Unknown start node "${meta.start}"`
-        : "No story nodes found (expected at least one # heading)",
+        : "No story passages found (expected a title line at column 0, then indented content)",
     );
   }
   return { meta, css, nodes, order };

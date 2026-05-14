@@ -1,0 +1,59 @@
+---
+title: Démo histoire
+version: "0.1.0"
+author: Auteurice
+email: hello@example.com
+link: https://example.com
+start: debut
+---
+
+_css
+	```css
+	main {
+		max-width: 42rem;
+	}
+	```
+
+debut
+	Tu commences ici. (set: score 0) (set: vip true)
+
+	Si tu es VIP, un raccourci apparaît : (if: vip)(vip_node)
+
+	Ternaire (plan) : (if: vip = true ; **tu es VIP** ; _pas encore VIP_).
+
+	(ifnot: score = 0 ; (score était déjà > 0) ; (premier passage))
+
+	Après une visite, (set: score++) ton score vaut une unité de plus (score = **{{score}}**). (if: vip true)(démonstration: [Ajouter 1 de score](apres_un))
+
+	--
+
+	[Aller au carrefour](carrefour)
+
+carrefour
+	Au carrefour. (set: vip true)
+
+	(if: vip)(vip_node)
+
+	--
+
+	[Fin](fin)
+
+vip_node
+	Raccourci VIP.
+
+	--
+
+	[Retour carrefour](carrefour)
+
+apres_un
+	Le compteur vient d’être incrémenté.
+
+	--
+
+	[Suite](carrefour)
+
+fin
+	Fin.
+
+	--
+
