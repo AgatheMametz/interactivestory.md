@@ -35,85 +35,85 @@ _css
 debut
     # Les mémoires d'Encelade
 
-    Le bruit des bottes fait trembler les fenêtres encore intactes de la salle du trône où sont regroupés vos plus proches fidèles.
+    Le bruit des bottes fait trembler les fenêtres encore intactes de la salle du trône où sont regroupés les plus proches fidèles de la reine.
 
     "Ma reine, l'armée de Cylian a pénétré le château. Quels sont vos ordres ?"
 
-        (ifnotyet)([Lentement se servir du thé](thé))
-        (ifnotyet)([Regarder vos sujets](sujets))
-        [Faire un discours](discours)
+        (ifnotyet)([Elle se sert lentement du thé](thé))
+        (ifnotyet)([Elle regarde ses sujets](sujets))
+        [Elle fait un discours](discours)
 
 reposer
-    Vous vous reposez sur votre trône.
+    Elle se repose sur son trône.
 
     (set: souvenir true)
 
-        [Se lever](debut)
+        [Elle se lève](debut)
 
 thé
-    D'une main tremblante, vous prenez la théière froide et versez ce qu'il reste de votre infusion préférée.
+    D'une main tremblante, elle prend la théière froide et verse ce qu'il reste de son infusion préférée.
     
     Il s'agit d'une infusion de thé d'or, de lait de chèvre et de fleurs de sureau. On l'appelle **L'origine du bonheur** (quelle ironie). Mais aujourd'hui, ce thé n'a le goût que de la défaite, de la mort, de l'échec.
 
-    Votre échec.
+    Son échec.
 
-        (ifnotyet)([Ils mourront tous, et c'est ma faute](sujets))
-        ([Faire un discours](discours))
+        (ifnotyet)([Ils mourront tous, et c'est sa faute](sujets))
+        ([Elle fait un discours](discours))
 
 sujets
     (clear)
-    Vous vous asseyez sur votre trône et regardez vos sujets.
+    Elle s'assoit sur son trône et regarde ses sujets.
 
     (set:sujet 0)
 
         (ifnotyet)([Dame Pargot](pargot))
-        (ifnotyet)([Duc Gontrant](gontrant))
         (ifnotyet)([Elphée](elphee))
-        (if:sujet = 3)([Faire un discours](discours))
+        (ifnotyet)([Duc Gontrant](gontrant))
+        (if:sujet = 3)([Elle fait un discours](discours))
 
 elphee
     (set:sujet++)
 
-    Debout au fond de la salle, vous voyez **Elphée**, votre gouvernante. Elle a perdu son mari la veille lors d'une percée des Cylians, mais son devoir envers vous l'oblige. Envers et contre tout, elle reste digne.
+    Debout au fond de la salle, elle voit **Elphée**, sa gouvernante. Elphée a perdu son mari la veille lors d'une percée des Cylians, mais son devoir envers la reine l'oblige. Envers et contre tout, elle reste digne.
 
         (ifnotyet)([Dame Pargot](pargot))
         (ifnotyet)([Duc Gontrant](gontrant))
         (ifnotyet)([Elphée](elphee))
-        (if:sujet = 3)([Faire un discours](discours))
+        (if:sujet = 3)([Elle fait un discours](discours))
 
 pargot
     (set:sujet++)
-    À coté d'elle, entourée de ses enfants, **Dame Pargot**, fidèle des fidèles, décomposée. Vous êtes déçue de l'avoir déçue. 
+    À coté d'elle, entourée de ses enfants, **Dame Pargot**, fidèle des fidèles, décomposée. La reine est déçue de l'avoir déçue. 
 
         (ifnotyet)([Dame Pargot](pargot))
-        (ifnotyet)([Duc Gontrant](gontrant))
         (ifnotyet)([Elphée](elphee))
-        (if:sujet = 3)([Faire un discours](discours))
+        (ifnotyet)([Duc Gontrant](gontrant))
+        (if:sujet = 3)([Elle fait un discours](discours))
 
 gontrant
     (set:sujet++)
     Et puis tous les autres. Les vieillards qui se sont regroupés dans la salle du trône, les enfants, les gardes les plus jeunes. Ha oui et bien sûr, celui qui s'était en premier porté volontaire pour rester avec celles et ceux à protéger : le **Duc Gontrant de Batis'Delia**...
 
         (ifnotyet)([Dame Pargot](pargot))
-        (ifnotyet)([Duc Gontrant](gontrant))
         (ifnotyet)([Elphée](elphee))
-        (if:sujet = 3)([Faire un discours](discours))
+        (ifnotyet)([Duc Gontrant](gontrant))
+        (if:sujet = 3)([Elle fait un discours](discours))
 
 discours
     (clear)
-    Vous vous levez et vous vous dirigez vers eux.
+    Elle se lève et se dirige vers eux.
     
     "Chers amis, je suis fière de vous. Vous avez rendu le royaume des Asterales fiers. Mais cela n'a pas s..."
 
     ## CLAC   
 
-        [Vous vous retournez avec effroi.](effroi)
+        [Elle se retourne avec effroi.](effroi)
 
 effroi
-    Vous vous retournez avec effroi.
+    Elle se retourne avec effroi.
     
     Dans l'entrebaillement de la porte, une épée de flamme à la main :
-    **Kerner Kernes** se détache de l'ombre. Le général de l'armée de Cylian, recouvert du sang de vos sujets, s'approche et vous menace de la pointe de son arme.
+    **Kerner Kernes** se détache de l'ombre. Le général de l'armée de Cylian, recouvert du sang de ses sujets, s'approche et la menace de la pointe de son arme.
 
     "Ne vous inquiétez pas, ça sera rapide."
 
@@ -125,20 +125,28 @@ effroi
 
 magnard_start
     (clear)
-    C'était la seconde fois de sa vie que Magnard était enchaîné. La première fois, il était sur un autre continent, en mission spéciale pour la Reine.
+    C'était la seconde fois de votre vie que vous étiez enchaîné. La première fois, vous étiez sur un autre continent, en mission spéciale pour la Reine.
     
-    À l'époque, en pleine force de ses 20 ans, il n'imaginais pas d'autres issues que de réussir à se libérer de ses liens, accourir au secours de ses compagnons d'armes et disparaître dans la nuit au damn de ces soldats Cylians. 
+    À l'époque, en pleine force de vos 20 ans, vous n'imaginiez pas d'autres issues que de réussir à vous libérer de vos liens, accourir au secours de vos compagnons d'armes et disparaître dans la nuit au damn de ces soldats Cylians. 
 
         [suite](magnard_suite)
 
 magnard_suite
-    40 ans plus tard, il ne voyait plus non plus d'issue. Venus par milliers, les Cylians avaient traversé les campagnes du royaume des Asterales. Ils avaient pillés, brûlé les terres, de sorte à ce que si ils ne mourraient pas d'une lame, ils pourraient de faim. 
+    Vous êtes 40 ans plus vieux, et cette fois, vous ne voyiez pas d'issue. 
+    
+    Venus par milliers, les Cyliens avaient traversé les campagnes du royaume des Asterales. Ils avaient pillés, brûlé les terres, de sorte à ce que si ils ne mourraient pas d'une lame, ils pourraient de faim. 
 
-    Magnard contemplait : l'espoir disparu, le futur sombre pour son royaume, tout ce qu'il ne pourra jamais vivre, Elphée. 
+    Vous contempliez : l'espoir disparu, le futur sombre pour votre royaume, tout ce que vous ne pourrez jamais vivre, Elphée. 
 
         [Elphée...](penser_elphee)
 
 penser_elphee
     "Elphée..."
 
-    Sa femme. Ils se sont rencontrés jeunes, il n'était qu'un écuyer. Elphée était cachée dans les appartements de la Reine, combien de temps avant qu'ils ne la trouvent ? 
+    Votre femme. Vous vous êtes rencontrés jeunes, vous n'étiez qu'un écuyer. Elphée était cachée dans les appartements de la Reine, combien de temps avant qu'ils ne la trouvent ? 
+
+        [Vous marchiez vers votre mort.](march_vers_mort)
+
+march_vers_mort
+    Vous marchiez vers votre mort. Quand un souvenir vous vient à l'esprit.
+    
