@@ -31,12 +31,16 @@ _css
 	main {
 		max-width: 42rem;
 	}
+
+    footer {
+        margin-top: 10rem;
+    }
 	```
 
 debut
     # Les mémoires d'Encelade
 
-    Le bruit des bottes fait trembler les fenêtres encore intactes de la salle du trône où sont regroupés les plus proches fidèles de la reine.
+    Le lointain bruit des boulets de canon fait trembler les fenêtres encore intactes de la salle du trône où sont regroupés ses plus proches fidèles.
 
     "Ma reine, l'armée de Cylian a pénétré le château. Quels sont vos ordres ?"
 
@@ -44,15 +48,8 @@ debut
         (ifnotyet)([Elle regarde ses sujets](sujets))
         [Elle fait un discours](discours)
 
-reposer
-    Elle se repose sur son trône.
-
-    (set: souvenir true)
-
-        [Elle se lève](debut)
-
 thé
-    D'une main tremblante, elle prend la théière froide et verse ce qu'il reste de son infusion préférée.
+    D'une main tremblante, **la Reine Prunelle** prend la théière froide et verse ce qu'il reste de son infusion préférée.
     
     Il s'agit d'une infusion de thé d'or, de lait de chèvre et de fleurs de sureau. On l'appelle **L'origine du bonheur** (quelle ironie). Mais aujourd'hui, ce thé n'a le goût que de la défaite, de la mort, de l'échec.
 
@@ -116,9 +113,7 @@ effroi
     Dans l'entrebaillement de la porte, une épée de flamme à la main :
     **Kerner Kernes** se détache de l'ombre. Le général de l'armée de Cylian, recouvert du sang de ses sujets, s'approche et la menace de la pointe de son arme.
 
-    "Ne vous inquiétez pas, ça sera rapide."
-
-
+    "Ne vous inquiétez pas, tout va bien se passer."
 
     *Tout espoir semblait disparu. Mais à quelques mètres, dans un couloir du château, un homme allait changer le destin de ces deux royaumes.*
 
@@ -126,7 +121,7 @@ effroi
 
 magnard_start
     (clear)
-    C'était la seconde fois de votre vie que vous étiez enchaîné. La première fois, vous étiez sur un autre continent, en mission spéciale pour la Reine.
+    **C'était la seconde fois de votre vie que vous étiez enchaîné.** La première fois, vous étiez sur un autre continent, en mission spéciale pour la Reine.
     
     À l'époque, en pleine force de vos 20 ans, vous n'imaginiez pas d'autres issues que de réussir à vous libérer de vos liens, accourir au secours de vos compagnons d'armes et disparaître dans la nuit au damn de ces soldats Cylians. 
 
@@ -137,6 +132,8 @@ magnard_suite
     
     Venus par milliers, les Cyliens avaient traversé les campagnes du royaume des Asterales. Ils avaient pillés, brûlé les terres, de sorte à ce que si ils ne mourraient pas d'une lame, ils pourraient de faim. 
 
+    Tous vos compagnons d'armes ont péri sous les coups de leurs lames. Cette nuit encore, vous aviez pu dormir parce qu'ils s'étaient relayés pour faire la garde.
+
     Vous contempliez : l'espoir disparu, le futur sombre pour votre royaume, tout ce que vous ne pourrez jamais vivre, Elphée. 
 
         [Elphée...](penser_elphee)
@@ -146,8 +143,120 @@ penser_elphee
 
     Votre femme. Vous vous êtes rencontrés jeunes, vous n'étiez qu'un écuyer. Elphée était cachée dans les appartements de la Reine, combien de temps avant qu'ils ne la trouvent ? 
 
-        [Vous marchiez vers votre mort.](march_vers_mort)
+    Que faites-vous ?
 
-march_vers_mort
-    Vous marchiez vers votre mort. Quand un souvenir vous vient à l'esprit.
+        [Vérifier les chaînes](vérifier_chaînes)
+        [Regarder autour de vous](regarder_autour_de_vous)
+        [Réfléchir à un plan](réfléchir_à_un_plan)
+        [Demander pitié](pitié)
+        [Tendre l'oreille](tendre_oreille)
+
+vérifier_chaînes
+    (clear)
+    Vous vérifiez les chaînes.
     
+    Vous constatez que les chaînes sont intactes. Au vu de votre état physique, même en forçant, vous ne pourrez pas vous libérer.
+
+        Vous continuez de marcher.
+
+        (ifnotyet)([Vérifier les chaînes](vérifier_chaînes))
+        (if:pitié = false)([Regarder autour de vous](regarder_autour_de_vous))
+        (if:pitié = true)([Regarder autour de vous](regarder_autour_de_vous_pitie))
+        (ifnotyet)([Réfléchir à un plan](réfléchir_à_un_plan))
+        (ifnotyet)([Demander pitié](pitié))
+        (ifnotyet)([Tendre l'oreille](tendre_oreille))
+        (if: garde_pitie = true)([Attaquer le garde](attaquer_garde_pitie))
+
+tendre_oreille
+    C'est un silence de mort.
+
+    Les oiseaux de la volière se sont tus. 
+
+    Les poules de la cour ont le bec cloué.
+
+    Le bruit de vos chaînes prend toute la place. 
+
+        Vous continuez de marcher.
+
+        (ifnotyet)([Vérifier les chaînes](vérifier_chaînes))
+        (if:pitié = false)([Regarder autour de vous](regarder_autour_de_vous))
+        (if:pitié = true)([Regarder autour de vous](regarder_autour_de_vous_pitie))
+        (ifnotyet)([Réfléchir à un plan](réfléchir_à_un_plan))
+        (ifnotyet)([Demander pitié](pitié))
+        (ifnotyet)([Tendre l'oreille](tendre_oreille))
+        (if: garde_pitie = true)([Attaquer le garde](attaquer_garde_pitie))
+
+regarder_autour_de_vous
+    (clear)
+    Vous vous êtes promené dans ces couloirs depuis toujours. Pourtant aujourd'hui, ils sont étrangers. 
+
+    Vous prêtez attention à votre environnement :
+
+    Déjà, il n'y a que vous et trois gardes. Un gros, un moyen et un petit.
+    Deux ont les bras remplis de reliques de salle aux trésors du château. Ils ne sont pas privés... Ordures.
+
+    La direction que vous prenez vous indique qu'ils vous emmènent à l'extérieur. Probablement jusqu'à leur camp au delà des remparts. Mh... Vous savez que si vous dépassez l'enceinte des murailles, vous n'aurez pas la moindre chance de vous en sortir.
+
+        Vous continuez de marcher.
+
+        (ifnotyet)([Vérifier les chaînes](vérifier_chaînes))
+        (if:pitié = false)([Regarder autour de vous](regarder_autour_de_vous))
+        (if:pitié = true)([Regarder autour de vous](regarder_autour_de_vous_pitie))
+        (ifnotyet)([Réfléchir à un plan](réfléchir_à_un_plan))
+        (ifnotyet)([Demander pitié](pitié))
+        (ifnotyet)([Tendre l'oreille](tendre_oreille))
+        (if: garde_pitie = true)([Attaquer le garde](attaquer_garde_pitie))
+
+pitié
+    "Elphée, ma femme, je dois sauver ma femme. Vous êtes humains, vous aussi. Vous devez comprendre. Vous devez comprendre !!"
+
+    Dans votre émotion, vous vous aggripez à un des gardes. Les deux autres tournent leur lance vers vous, prêts à vous embrocher. 
+
+    Vous mettez vos mains en l'air.
+    
+    Vous lisez dans les yeux du garde voleur de reliques une lueur de pitié.
+    
+    "Je suis désolé" dit-il lassement.
+
+    (set: pitié true)
+
+        Vous continuez de marcher.
+
+        (ifnotyet)([Vérifier les chaînes](vérifier_chaînes))
+        (if:pitié = false)([Regarder autour de vous](regarder_autour_de_vous))
+        (if:pitié = true)([Regarder autour de vous](regarder_autour_de_vous_pitie))
+        (ifnotyet)([Réfléchir à un plan](réfléchir_à_un_plan))
+        (ifnotyet)([Demander pitié](pitié))
+        (ifnotyet)([Tendre l'oreille](tendre_oreille))
+        (if: garde_pitie = true)([Attaquer le garde](attaquer_garde_pitie))
+
+regarder_autour_de_vous_pitie
+    Ce garde qui vous regarde avec pitié a l'air moins dangereux que les autres. En entendant votre voix cassée par la douleur, son visage s'est déformé en une grimace. Il n'est clairement pas à l'aise avec ce qu'il est en train de faire.
+
+    Vous remarquez que il fait tomber une relique de ses bras.
+
+    (set: garde_pitie true)
+
+        (ifnotyet)([Vérifier les chaînes](vérifier_chaînes))
+        (ifnotyet)([Demander pitié](pitié))
+        (ifnotyet)([Tendre l'oreille](tendre_oreille))
+        (if: garde_pitie = true)([Prendre la relique](prendre_relique))
+
+
+réfléchir_à_un_plan
+    Rien ne vous vient à l'esprit.
+
+    (clear)
+        Vous continuez de marcher.
+
+        (ifnotyet)([Vérifier les chaînes](vérifier_chaînes))
+        (if:pitié = false)([Regarder autour de vous](regarder_autour_de_vous))
+        (if:pitié = true)([Regarder autour de vous](regarder_autour_de_vous_pitie))
+        (ifnotyet)([Réfléchir à un plan](réfléchir_à_un_plan))
+        (ifnotyet)([Demander pitié](pitié))
+        (ifnotyet)([Tendre l'oreille](tendre_oreille))
+        (if: garde_pitie = true)([Prendre la relique](prendre_relique))
+
+attaquer_garde_pitie
+    (clear)
+    Vous attaquez le garde qui vous regarde avec pitié.

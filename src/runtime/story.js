@@ -215,13 +215,13 @@
 
   function evalCondition(expr) {
     const e = expr.trim();
-    const eq = /^(\w+)\s*=\s*(.+)$/.exec(e);
+    const eq = /^([\p{L}_][\p{L}\p{N}_]*)\s*=\s*(.+)$/u.exec(e);
     if (eq) {
       const name = eq[1];
       const lit = parseLiteral(eq[2].trim());
       return valuesEqual(vars[name], lit);
     }
-    const shorthand = /^(\w+)\s+(\S+)$/.exec(e);
+    const shorthand = /^([\p{L}_][\p{L}\p{N}_]*)\s+(\S+)$/u.exec(e);
     if (shorthand) {
       return valuesEqual(vars[shorthand[1]], parseLiteral(shorthand[2]));
     }
@@ -230,7 +230,7 @@
 
   /** Affiche la valeur d’une variable dans le markdown (corps, ternaires, blocs binaires). */
   function expandVars(s) {
-    return s.replace(/\{\{(\w+)\}\}/g, (_, name) => {
+    return s.replace(/\{\{([\p{L}_][\p{L}\p{N}_]*)\}\}/gu, (_, name) => {
       const v = vars[name];
       if (v === undefined || v === null) return "";
       return String(v);
@@ -247,7 +247,7 @@
 
   function applySet(inner) {
     const s = inner.trim();
-    const inc = /^(\w+)\s*(\+\+|--)$/.exec(s);
+    const inc = /^([\p{L}_][\p{L}\p{N}_]*)\s*(\+\+|--)$/u.exec(s);
     if (inc) {
       const k = inc[1];
       const cur = Number(vars[k]);
@@ -300,7 +300,7 @@
 
   function evalEqualityCond(condStr) {
     const e = condStr.trim();
-    const eq = /^(\w+)\s*=\s*(.+)$/.exec(e);
+    const eq = /^([\p{L}_][\p{L}\p{N}_]*)\s*=\s*(.+)$/u.exec(e);
     if (!eq) return null;
     return valuesEqual(vars[eq[1]], parseLiteral(eq[2].trim()));
   }
@@ -626,6 +626,22 @@
         /* ignore */
       }
       location.reload();
+    });
+  }
+
+  const jumpSelect = document.getElementById("story-jump");
+  if (jumpSelect) {
+    for (const id of Object.keys(nodes).sort((a, b) => a.localeCompare(b, "fr"))) {
+      const opt = document.createElement("option");
+      opt.value = id;
+      opt.textContent = id;
+      jumpSelect.appendChild(opt);
+    }
+    jumpSelect.addEventListener("change", () => {
+      const id = jumpSelect.value;
+      if (!id) return;
+      goToNode(id);
+      jumpSelect.selectedIndex = 0;
     });
   }
 

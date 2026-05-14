@@ -69,9 +69,19 @@
       footer details {
         margin-top: 0.5rem;
       }
+      .story-footer-nav {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem 1rem;
+        margin-bottom: 0.75rem;
+      }
       #story-reset {
         display: inline-block;
-        margin-bottom: 0.75rem;
+      }
+      #story-jump {
+        min-width: 10rem;
+        max-width: 100%;
       }
       #vars-panel table,
       #about-panel table {
@@ -108,7 +118,13 @@
     </main>
     <footer>
       <div style="max-width: 500px; margin: 0 auto">
-        <a id="story-reset" href="#">Repartir du début</a>
+        <div class="story-footer-nav">
+          <a id="story-reset" href="#">Repartir du début</a>
+          <label for="story-jump">Aller à un nœud</label>
+          <select id="story-jump">
+            <option value="">—</option>
+          </select>
+        </div>
         <details>
           <summary>About this story</summary>
           <div id="about-panel"></div>
