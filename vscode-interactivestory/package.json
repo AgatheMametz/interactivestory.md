@@ -2,7 +2,7 @@
   "name": "interactivestory-md",
   "displayName": "Interactive Story (.it)",
   "description": "Coloration pour les passages indentés (corps / options), le front matter YAML.",
-  "version": "0.2.3",
+  "version": "0.2.6",
   "publisher": "interactivestory",
   "repository": {
     "type": "git",
@@ -18,12 +18,36 @@
   "contributes": {
     "configurationDefaults": {
       "[interactivestory]": {
-        "editor.tokenColorCustomizations": {
+        "editor.semanticHighlighting.enabled": false
+      },
+      "editor.tokenColorCustomizations": {
+        "[interactivestory]": {
           "textMateRules": [
             {
-              "scope": ["support.function.interactivestory"],
+              "scope": ["source.interactivestory support.function.interactivestory"],
               "settings": {
-                "foreground": "#e53935"
+                "foreground": "#1565c0"
+              }
+            },
+            {
+              "scope": [
+                "source.interactivestory markup.underline.link.interactivestory",
+                "source.interactivestory string.other.link.title.interactivestory",
+                "source.interactivestory punctuation.definition.link.interactivestory",
+                "source.interactivestory markup.underline.link.markdown",
+                "source.interactivestory string.other.link.title.markdown",
+                "source.interactivestory string.other.link.description.markdown",
+                "source.interactivestory string.other.link.description.title.markdown",
+                "source.interactivestory punctuation.definition.link.markdown",
+                "source.interactivestory punctuation.definition.link.description.begin.markdown",
+                "source.interactivestory punctuation.definition.link.description.end.markdown",
+                "source.interactivestory punctuation.definition.link.title.begin.markdown",
+                "source.interactivestory punctuation.definition.link.title.end.markdown",
+                "source.interactivestory meta.link.inline.markdown",
+                "source.interactivestory meta.link.inet.markdown"
+              ],
+              "settings": {
+                "foreground": "#e65100"
               }
             }
           ]

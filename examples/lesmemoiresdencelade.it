@@ -11,20 +11,21 @@ _css
 	```css
     @import url("https://fonts.googleapis.com/css2?family=PT+Serif:ital,wght@0,400;0,700;1,400;1,700&display=swap");
     body {
-        background-color:rgb(45, 43, 40);
-        color: white;
+        background-color:rgb(242, 238, 233);
+        color:rgba(0, 0, 0, 0.88);
         font-family: "PT Serif", serif;
         font-size: 1.2rem;
         line-height: 1.5;
     }
     a {
-        color:rgb(255, 238, 48);
+        color:rgb(8, 105, 165);
         text-decoration: none;
     }
     a:hover {
         text-decoration: underline;
         text-decoration-color: currentColor;
         text-underline-offset: 0.22em;
+        text-decoration-thickness: 0.1em;
     }
 	main {
 		max-width: 42rem;
@@ -32,15 +33,16 @@ _css
 	```
 
 debut
+    # Les mémoires d'Encelade
+
     Le bruit des bottes fait trembler les fenêtres encore intactes de la salle du trône où sont regroupés vos plus proches fidèles.
 
     "Ma reine, l'armée de Cylian a pénétré le château. Quels sont vos ordres ?"
 
-    (set: souvenir true)
+
 
         (ifnotyet)([Lentement se servir du thé](thé))
         (ifnotyet)([Regarder vos sujets](sujets))
-        (if: souvenir = true)([Se reposer](reposer))
         [Faire du discours](discours)
 
 reposer
@@ -51,23 +53,72 @@ reposer
         [Se lever](debut)
 
 thé
-    D'une main tremblante, vous prenez la théière froide et versez ce qu'il reste de votre infusion préférée. L'idée qu'il s'agit probablement de la dernière fois que vous ressentirez cette odeur vous traverse l'esprit. 
+    D'une main tremblante, vous prenez la théière froide et versez ce qu'il reste de votre infusion préférée.
+    
+    Il s'agit d'une infusion de thé d'or, de lait de chèvre et de fleurs de sureau. On l'appelle **L'origine du bonheur** (quelle ironie). Mais aujourd'hui, ce thé n'a le goût que de la défaite, de la mort, de l'échec.
 
-    Mais en portant la tasse à vos lèvres, vous ne l'appréciez pas. Vos émotions sont ailleurs. Ce parfum qui vous rendait forte semble comme vous rappeler à quel point vous êtes devenue petite, toute petite.
+    Votre échec.
 
-        (ifnotyet)([Lentement se servir du thé](thé))
-        (ifnotyet)([Regarder vos sujets](sujets))
-        [Faire du discours](discours)
+        (ifnotyet)([Ils mourront tous, et c'est ma faute](sujets))
+        ([Faire un discours](discours))
 
 sujets
+    (clear)
     Vous vous asseyez sur votre trône et regardez vos sujets.
 
-        (ifnotyet)([Lentement se servir du thé](thé))
-        (ifnotyet)([Regarder vos sujets](sujets))
-        [Faire du discours](discours)
+    (set:sujet 0)
+
+        (ifnotyet)([Dame Pargot](pargot))
+        (ifnotyet)([Duc Gontrant](gontrant))
+        (ifnotyet)([Elphée](elphee))
+        (if:sujet = 3)([Faire un discours](discours))
+
+elphee
+    (set:sujet++)
+
+    Debout au fond de la salle, vous voyez **Elphée**, votre gouvernante. Elle a perdu son mari la veille lors d'une percée des Cylians, mais son devoir envers vous l'oblige. Envers et contre tout, elle reste digne.
+
+        (ifnotyet)([Dame Pargot](pargot))
+        (ifnotyet)([Duc Gontrant](gontrant))
+        (ifnotyet)([Elphée](elphee))
+        (if:sujet = 3)([Faire un discours](discours))
+
+pargot
+    (set:sujet++)
+    À coté d'elle, entourée de ses enfants, **Dame Pargot**, fidèle des fidèles, décomposée. Vous êtes déçue de l'avoir déçue. 
+
+        (ifnotyet)([Dame Pargot](pargot))
+        (ifnotyet)([Duc Gontrant](gontrant))
+        (ifnotyet)([Elphée](elphee))
+        (if:sujet = 3)([Faire un discours](discours))
+
+gontrant
+    (set:sujet++)
+    Et puis tous les autres. Les vieillards qui se sont regroupés dans la salle du trône, les enfants, les gardes les plus jeunes. Ha oui et bien sûr, celui qui s'était en premier porté volontaire pour rester avec celles et ceux à protéger : le **Duc Gontrant de Batis'Delia**...
+    
+        (ifnotyet)([Dame Pargot](pargot))
+        (ifnotyet)([Duc Gontrant](gontrant))
+        (ifnotyet)([Elphée](elphee))
+        (if:sujet = 3)([Faire un discours](discours))
 
 discours
     (clear)
-    C'est compliqué là non ?
+    Vous vous levez et vous vous dirigez vers eux.
+    
+    "Chers amis, je suis fière de vous. 
+    
 
-        [Lentement se servir du thé](thé)
+
+magnum_start
+    C'était la seconde fois de sa vie que Magnum était enchaîné. La première fois, il était sur un autre continent, en mission spéciale pour la Reine Prunelle. À l'époque, en pleine force de ses 20 ans, il n'imaginais pas d'autres issues que de réussir à se libérer de ses liens, accourir au secours de ses compagnons d'armes et disparaître dans la nuit au damn de ces soldats Cylians. 
+
+    40 ans plus tard, il ne voyait plus non plus d'issue. Venus par milliers, les Cylians avaient traversé les campagnes du royaume des Asterales. Ils avaient pillés, brûlé les terres, de sorte à ce que si ils ne mourraient pas d'une lame, ils pourraient de faim. 
+
+    Magnum contemplait : l'espoir disparu, le futur sombre pour son royaume, tout ce qu'il ne pourra jamais vivre, Elphée. 
+
+        [Elphée...](penser_elphee)
+
+penser_elphee
+    "Elphée..."
+
+    Sa femme. Ils se sont rencontrés jeunes, il n'était qu'un écuyer. Alphi était cachée dans les appartements de la Reine, combien de temps avant qu'ils ne la trouvent ? 

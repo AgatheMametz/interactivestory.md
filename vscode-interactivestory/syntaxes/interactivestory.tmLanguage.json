@@ -16,7 +16,7 @@
       "patterns": [{ "include": "source.yaml" }]
     },
     {
-      "begin": "^([\\t ]+)",
+      "begin": "^([\\t ]+)(?=\\S)",
       "end": "$",
       "beginCaptures": {
         "1": { "name": "punctuation.whitespace.interactivestory" }
@@ -40,6 +40,8 @@
     "story-dsl": {
       "patterns": [
         { "include": "#story-set" },
+        { "include": "#story-if-eq-binary" },
+        { "include": "#story-ifnotyet-link" },
         { "include": "#story-if-binary" },
         { "include": "#story-ifnotyet-binary" },
         { "include": "#story-if-ternary" },
@@ -56,6 +58,44 @@
         "3": { "name": "" },
         "4": { "name": "string.unquoted.interactivestory" },
         "5": { "name": "punctuation.section.embedded.end.interactivestory" }
+      }
+    },
+    "story-if-eq-binary": {
+      "match": "(\\()((?:ifnot:|if:))(\\s*)(\\w+)(\\s*=\\s*)([^)]+)(\\))(\\s*)(\\()(\\[)([^\\]]*)(\\])(\\()([^)]*)(\\))(\\))",
+      "captures": {
+        "1": { "name": "punctuation.section.embedded.begin.interactivestory" },
+        "2": { "name": "support.function.interactivestory" },
+        "3": { "name": "" },
+        "4": { "name": "variable.other.interactivestory" },
+        "5": { "name": "keyword.operator.comparison.interactivestory" },
+        "6": { "name": "constant.language.interactivestory" },
+        "7": { "name": "punctuation.section.embedded.end.interactivestory" },
+        "8": { "name": "" },
+        "9": { "name": "punctuation.section.embedded.begin.interactivestory" },
+        "10": { "name": "punctuation.definition.link.interactivestory" },
+        "11": { "name": "string.other.link.title.interactivestory" },
+        "12": { "name": "punctuation.definition.link.interactivestory" },
+        "13": { "name": "punctuation.definition.link.interactivestory" },
+        "14": { "name": "markup.underline.link.interactivestory" },
+        "15": { "name": "punctuation.definition.link.interactivestory" },
+        "16": { "name": "punctuation.section.embedded.end.interactivestory" }
+      }
+    },
+    "story-ifnotyet-link": {
+      "match": "(?i)(\\()(ifnotyet)(\\))(\\s*)(\\()(\\[)([^\\]]*)(\\])(\\()([^)]*)(\\))(\\))",
+      "captures": {
+        "1": { "name": "punctuation.section.embedded.begin.interactivestory" },
+        "2": { "name": "support.function.interactivestory" },
+        "3": { "name": "punctuation.section.embedded.end.interactivestory" },
+        "4": { "name": "" },
+        "5": { "name": "punctuation.section.embedded.begin.interactivestory" },
+        "6": { "name": "punctuation.definition.link.interactivestory" },
+        "7": { "name": "string.other.link.title.interactivestory" },
+        "8": { "name": "punctuation.definition.link.interactivestory" },
+        "9": { "name": "punctuation.definition.link.interactivestory" },
+        "10": { "name": "markup.underline.link.interactivestory" },
+        "11": { "name": "punctuation.definition.link.interactivestory" },
+        "12": { "name": "punctuation.section.embedded.end.interactivestory" }
       }
     },
     "story-if-binary": {

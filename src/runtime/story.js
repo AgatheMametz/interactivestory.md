@@ -152,7 +152,7 @@
       return { kind: "ifnot", body: inner.slice(7).trim() };
     }
     if (inner.startsWith("if:")) {
-      return { kind: "if", body: inner.slice(4).trim() };
+      return { kind: "if", body: inner.slice(3).trim() };
     }
     return null;
   }
