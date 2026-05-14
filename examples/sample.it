@@ -25,35 +25,25 @@ debut
 
 	Après une visite, (set: score++) ton score vaut une unité de plus (score = **{{score}}**). (if: vip true)(démonstration: [Ajouter 1 de score](apres_un))
 
-	--
-
-	[Aller au carrefour](carrefour)
+		[Aller au carrefour](carrefour)
 
 carrefour
 	Au carrefour. (set: vip true)
 
 	(if: vip)(vip_node)
 
-	--
-
-	[Fin](fin)
+		[Fin](fin)
 
 vip_node
 	Raccourci VIP.
 
-	--
-
-	[Retour carrefour](carrefour)
+		[Retour carrefour](carrefour)
 
 apres_un
 	Le compteur vient d’être incrémenté.
 
-	--
-
-	[Suite](carrefour)
+		[Suite](carrefour)
 
 fin
 	Fin.
-
-	--
 

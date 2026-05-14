@@ -1,6 +1,6 @@
 # Extension Cursor / VS Code — fichiers `.it`
 
-Coloration pour le format **passage en colonne 0 + bloc indenté + séparateur `--`** (histoires interactives).
+Coloration pour le format **passage en colonne 0 + bloc indenté** (corps au premier niveau, options plus indentées) et le front matter YAML.
 
 L’extension **`.it`** évite que Cursor ouvre le fichier comme du Markdown générique (`.md`).
 

@@ -11,9 +11,13 @@
   /** Nœuds déjà affichés au moins une fois (pour `ifNotYet` sur les choix). */
   const visited = new Set();
 
+  /** Mis à `true` si `processMarkers` retire un `(clear)` du texte courant. */
+  let pendingChronicleClear = false;
+
   const chronicle = document.getElementById("chronicle");
   const optionsNav = document.getElementById("options");
   const aboutPanel = document.getElementById("about-panel");
+  const varsPanel = document.getElementById("vars-panel");
 
   function escapeHtml(s) {
     return String(s)
@@ -153,7 +157,7 @@
     return null;
   }
 
-  function replaceConditionalMarkers(s, depth) {
+  function replaceConditionalMarkers(s, depth, ctx) {
     let out = s;
     let pos = 0;
     let guard = 0;
@@ -199,7 +203,7 @@
             replacement = "";
           } else {
             replacement = ensureStoryLinkIfBareNodeId(
-              processMarkers(innerRaw, depth + 1),
+              processMarkers(innerRaw, depth + 1, ctx),
             );
           }
         }
@@ -218,7 +222,7 @@
         if (depth >= 12) {
           replacement = "";
         } else {
-          replacement = processMarkers(branch, depth + 1);
+          replacement = processMarkers(branch, depth + 1, ctx);
         }
       }
 
@@ -228,7 +232,7 @@
     return out;
   }
 
-  function processMarkers(md, depth = 0) {
+  function processMarkers(md, depth = 0, ctx = {}) {
     if (depth > 12) return md;
     let out = md;
     const setRe = /\(set:\s*([^)]+)\)/g;
@@ -240,8 +244,17 @@
       out = out.split(st.raw).join("");
     }
 
-    out = replaceConditionalMarkers(out, depth);
-    return expandVars(out);
+    out = replaceConditionalMarkers(out, depth, ctx);
+    out = expandVars(out);
+    if (!ctx.skipClear) {
+      out = out.replace(/\(\s*clear\s*\)/gi, () => {
+        pendingChronicleClear = true;
+        return "";
+      });
+    } else {
+      out = out.replace(/\(\s*clear\s*\)/gi, "");
+    }
+    return out;
   }
 
   marked.use({
@@ -259,20 +272,76 @@
     },
   });
 
-  function renderMd(md) {
-    const processed = processMarkers(md);
-    return marked.parse(processed, { async: false });
+  function formatVarValue(v) {
+    if (v === true || v === false) return String(v);
+    if (typeof v === "number" && Number.isFinite(v)) return String(v);
+    if (typeof v === "string") return JSON.stringify(v);
+    if (v == null) return String(v);
+    try {
+      return JSON.stringify(v);
+    } catch {
+      return String(v);
+    }
   }
 
-  function renderOptions(list) {
+  function renderVars() {
+    if (!varsPanel) return;
+    const keys = Object.keys(vars).sort();
+    if (keys.length === 0) {
+      varsPanel.innerHTML = "<p><em>Aucune variable</em></p>";
+      return;
+    }
+    const rows = keys
+      .map(
+        (k) =>
+          `<tr><td><code>${escapeHtml(k)}</code></td><td>${escapeHtml(formatVarValue(vars[k]))}</td></tr>`,
+      )
+      .join("");
+    varsPanel.innerHTML = `<table><thead><tr><th scope="col">Nom</th><th scope="col">Valeur</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+
+  function normalizeOptionLines(node) {
+    if (node.optionLines && node.optionLines.length) return node.optionLines;
+    if (!node.options || !node.options.length) return [];
+    return node.options.map((o) => {
+      const core = `[${o.label}](${o.target})`;
+      return o.ifNotYet ? `ifnotyet ${core}` : core;
+    });
+  }
+
+  /** Une ligne du bloc options : mêmes marqueurs que le corps (`(if:)`, `(set:)`, etc.). */
+  function choiceFromOptionLine(line) {
+    let s = line.trim();
+    let ifNotYet = false;
+    if (/^ifnotyet\s+/i.test(s)) {
+      ifNotYet = true;
+      s = s.replace(/^ifnotyet\s+/i, "").trim();
+    } else {
+      const mwrap = /^\(ifnotyet\)\s*\(\s*([\s\S]*?)\s*\)\s*$/.exec(s);
+      if (mwrap) {
+        ifNotYet = true;
+        s = mwrap[1].trim();
+      }
+    }
+    const processed = processMarkers(s, 0, { skipClear: true });
+    const lm = /\[([^\]]*)\]\(([^)]+)\)/.exec(processed.trim());
+    if (!lm) return null;
+    return {
+      label: lm[1].trim(),
+      target: lm[2].trim(),
+      ifNotYet,
+    };
+  }
+
+  function renderOptions(node) {
+    const lines = normalizeOptionLines(node);
     optionsNav.innerHTML = "";
-    if (!list || list.length === 0) return;
-    const visible = list.filter(
-      (opt) => !opt.ifNotYet || !visited.has(opt.target),
-    );
-    if (visible.length === 0) return;
+    if (lines.length === 0) return;
     const ul = document.createElement("ul");
-    for (const opt of visible) {
+    for (const line of lines) {
+      const opt = choiceFromOptionLine(line);
+      if (!opt) continue;
+      if (opt.ifNotYet && visited.has(opt.target)) continue;
       const li = document.createElement("li");
       const a = document.createElement("a");
       a.href = "#";
@@ -282,6 +351,7 @@
       li.appendChild(a);
       ul.appendChild(li);
     }
+    if (ul.childElementCount === 0) return;
     optionsNav.appendChild(ul);
   }
 
@@ -289,12 +359,16 @@
     const node = nodes[nodeId];
     if (!node) return;
     visited.add(nodeId);
+    pendingChronicleClear = false;
+    const processed = processMarkers(node.bodyMd);
+    if (pendingChronicleClear) chronicle.replaceChildren();
     const article = document.createElement("article");
     article.className = "story-node";
     article.dataset.node = nodeId;
-    article.innerHTML = renderMd(node.bodyMd);
+    article.innerHTML = marked.parse(processed, { async: false });
     chronicle.appendChild(article);
-    renderOptions(node.options);
+    renderOptions(node);
+    renderVars();
   }
 
   function goToNode(nodeId) {

@@ -26,53 +26,54 @@ function dedentLineBlock(lines) {
     .trimEnd();
 }
 
+function leadingIndentWidth(line) {
+  const m = line.match(/^[\t ]+/);
+  return m ? m[0].length : 0;
+}
+
+/**
+ * Corps puis options : la première ligne non vide plus indentée que le minimum
+ * du passage ouvre le bloc options (indentation « double » par rapport au corps).
+ */
 function splitBodyAndOptions(rawLines) {
-  let sep = -1;
+  const nonempty = rawLines.filter((l) => l.trim());
+  if (nonempty.length === 0) {
+    return { bodyLines: rawLines, optLines: [] };
+  }
+  let minIndent = Infinity;
+  for (const l of nonempty) {
+    const n = leadingIndentWidth(l);
+    if (n < minIndent) minIndent = n;
+  }
+  if (!Number.isFinite(minIndent) || minIndent === 0) {
+    return { bodyLines: rawLines, optLines: [] };
+  }
+  let firstOpt = -1;
   for (let j = 0; j < rawLines.length; j++) {
-    if (rawLines[j].trim() === "--") {
-      sep = j;
+    const l = rawLines[j];
+    if (!l.trim()) continue;
+    if (leadingIndentWidth(l) > minIndent) {
+      firstOpt = j;
       break;
     }
   }
-  if (sep === -1) {
+  if (firstOpt === -1) {
     return { bodyLines: rawLines, optLines: [] };
   }
   return {
-    bodyLines: rawLines.slice(0, sep),
-    optLines: rawLines.slice(sep + 1),
+    bodyLines: rawLines.slice(0, firstOpt),
+    optLines: rawLines.slice(firstOpt),
   };
 }
 
-function parseOptionsMarkdown(optMd) {
-  const options = [];
-  const linkRe = /\[([^\]]*)\]\(([^)]+)\)/g;
-  const lines = optMd.split(/\r?\n/);
-  for (const rawLine of lines) {
-    const line = rawLine.trim();
-    if (!line) continue;
-
-    let ifNotYet = false;
-    let searchIn = line;
-    if (/^ifnotyet\s+/i.test(line)) {
-      ifNotYet = true;
-      searchIn = line.replace(/^ifnotyet\s+/i, "").trim();
-    } else {
-      const wm = /^\(ifnotyet\)\s*\(\s*([\s\S]*?)\s*\)\s*$/.exec(line);
-      if (wm) {
-        ifNotYet = true;
-        searchIn = wm[1].trim();
-      }
-    }
-
-    const re = new RegExp(linkRe.source, "g");
-    let lm;
-    while ((lm = re.exec(searchIn)) !== null) {
-      const opt = { label: lm[1].trim(), target: lm[2].trim() };
-      if (ifNotYet) opt.ifNotYet = true;
-      options.push(opt);
-    }
+/** Lignes non vides du bloc options (Markdown), évaluées au runtime comme le corps. */
+function splitOptionLines(optMd) {
+  const lines = [];
+  for (const raw of optMd.split(/\r?\n/)) {
+    const t = raw.trim();
+    if (t) lines.push(t);
   }
-  return options;
+  return lines;
 }
 
 function extractCssFence(bodyMd) {
@@ -82,8 +83,8 @@ function extractCssFence(bodyMd) {
 
 /**
  * Après front matter : passages délimités par une ligne « titre » (sans indentation).
- * Sous chaque titre : lignes indentées ; une ligne ne contenant que `--` sépare
- * le corps (chronique) de la zone remplacée à chaque changement de node (options).
+ * Sous chaque titre : lignes indentées. Le corps est au niveau d’indentation minimal ;
+ * les lignes plus indentées (bloc final) sont les options remplacées à chaque navigation.
  */
 function splitIndentedPassages(md) {
   const lines = md.split(/\r?\n/);
@@ -135,9 +136,9 @@ export function parseStoryMarkdown(fileContent) {
     const { bodyLines, optLines } = splitBodyAndOptions(ch.rawLines);
     const bodyMd = dedentLineBlock(bodyLines);
     const optMd = dedentLineBlock(optLines);
-    const options = parseOptionsMarkdown(optMd);
+    const optionLines = splitOptionLines(optMd);
 
-    nodes[ch.id] = { bodyMd, options };
+    nodes[ch.id] = { bodyMd, optionLines };
     order.push(ch.id);
   }
 

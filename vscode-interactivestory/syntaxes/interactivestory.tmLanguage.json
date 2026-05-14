@@ -16,29 +16,103 @@
       "patterns": [{ "include": "source.yaml" }]
     },
     {
-      "match": "^([\\t ]*)(--)(\\s*)$",
-      "captures": {
-        "1": { "name": "punctuation.whitespace.interactivestory" },
-        "2": { "name": "keyword.operator.interactivestory" },
-        "3": { "name": "punctuation.whitespace.interactivestory" }
-      }
-    },
-    {
-      "begin": "^([\\t ]+)(?!(--)\\s*$)",
+      "begin": "^([\\t ]+)",
       "end": "$",
       "beginCaptures": {
         "1": { "name": "punctuation.whitespace.interactivestory" }
       },
       "contentName": "meta.embedded.line.markdown.interactivestory",
-      "patterns": [{ "include": "text.html.markdown" }]
+      "patterns": [
+        { "include": "#story-dsl" },
+        { "include": "text.html.markdown" }
+      ]
     },
     {
       "match": "^(?!^--$)([^\\s\\t#][^\\n]*)$",
-      "name": "entity.name.function.interactivestory"
+      "name": "support.function.interactivestory"
     },
     {
       "match": "^\\s+$",
       "name": "string.interactivestory.whitespace"
     }
-  ]
+  ],
+  "repository": {
+    "story-dsl": {
+      "patterns": [
+        { "include": "#story-set" },
+        { "include": "#story-if-binary" },
+        { "include": "#story-ifnotyet-binary" },
+        { "include": "#story-if-ternary" },
+        { "include": "#story-ifnotyet-keyword" },
+        { "include": "#story-clear" },
+        { "include": "#story-var-brace" }
+      ]
+    },
+    "story-set": {
+      "match": "(\\()(set:)(\\s*)([^)]+)(\\))",
+      "captures": {
+        "1": { "name": "punctuation.section.embedded.begin.interactivestory" },
+        "2": { "name": "support.function.interactivestory" },
+        "3": { "name": "" },
+        "4": { "name": "string.unquoted.interactivestory" },
+        "5": { "name": "punctuation.section.embedded.end.interactivestory" }
+      }
+    },
+    "story-if-binary": {
+      "match": "(\\()((?:ifnot:|if:))(\\s*)([^)]+)(\\))(\\s*)(\\()",
+      "captures": {
+        "1": { "name": "punctuation.section.embedded.begin.interactivestory" },
+        "2": { "name": "support.function.interactivestory" },
+        "3": { "name": "" },
+        "4": { "name": "meta.embedded.line.condition.interactivestory" },
+        "5": { "name": "punctuation.section.embedded.end.interactivestory" },
+        "6": { "name": "" },
+        "7": { "name": "" }
+      }
+    },
+    "story-ifnotyet-binary": {
+      "match": "(?i)(\\()(ifnotyet)(\\))(\\s*)(\\()",
+      "captures": {
+        "1": { "name": "punctuation.section.embedded.begin.interactivestory" },
+        "2": { "name": "support.function.interactivestory" },
+        "3": { "name": "punctuation.section.embedded.end.interactivestory" },
+        "4": { "name": "" },
+        "5": { "name": "" }
+      }
+    },
+    "story-if-ternary": {
+      "match": "(\\()((?:ifnot:|if:))(\\s*)([^)]+)(\\))(?!\\s*\\()",
+      "captures": {
+        "1": { "name": "punctuation.section.embedded.begin.interactivestory" },
+        "2": { "name": "support.function.interactivestory" },
+        "3": { "name": "" },
+        "4": { "name": "meta.embedded.line.condition.interactivestory" },
+        "5": { "name": "punctuation.section.embedded.end.interactivestory" }
+      }
+    },
+    "story-ifnotyet-keyword": {
+      "match": "(?i)(?<![(])\\b(ifnotyet)\\b(?!\\))",
+      "captures": {
+        "1": { "name": "support.function.interactivestory" }
+      }
+    },
+    "story-clear": {
+      "match": "(?i)(\\()(\\s*)(clear)(\\s*)(\\))",
+      "captures": {
+        "1": { "name": "punctuation.section.embedded.begin.interactivestory" },
+        "2": { "name": "" },
+        "3": { "name": "support.function.interactivestory" },
+        "4": { "name": "" },
+        "5": { "name": "punctuation.section.embedded.end.interactivestory" }
+      }
+    },
+    "story-var-brace": {
+      "match": "(\\{\\{)(\\w+)(\\}\\})",
+      "captures": {
+        "1": { "name": "punctuation.definition.template.begin.interactivestory" },
+        "2": { "name": "variable.other.interactivestory" },
+        "3": { "name": "punctuation.definition.template.end.interactivestory" }
+      }
+    }
+  }
 }

@@ -1,8 +1,8 @@
 {
   "name": "interactivestory-md",
   "displayName": "Interactive Story (.it)",
-  "description": "Coloration pour les passages indentés, le séparateur -- et le front matter YAML.",
-  "version": "0.2.0",
+  "description": "Coloration pour les passages indentés (corps / options), le front matter YAML.",
+  "version": "0.2.3",
   "publisher": "interactivestory",
   "repository": {
     "type": "git",
@@ -16,6 +16,20 @@
     "package": "npx --yes @vscode/vsce@latest package --no-dependencies --allow-missing-repository"
   },
   "contributes": {
+    "configurationDefaults": {
+      "[interactivestory]": {
+        "editor.tokenColorCustomizations": {
+          "textMateRules": [
+            {
+              "scope": ["support.function.interactivestory"],
+              "settings": {
+                "foreground": "#e53935"
+              }
+            }
+          ]
+        }
+      }
+    },
     "languages": [
       {
         "id": "interactivestory",
