@@ -8,6 +8,9 @@
   /** @type {Record<string, string|number|boolean>} */
   const vars = {};
 
+  /** Nœuds déjà affichés au moins une fois (pour `ifNotYet` sur les choix). */
+  const visited = new Set();
+
   const chronicle = document.getElementById("chronicle");
   const optionsNav = document.getElementById("options");
   const aboutPanel = document.getElementById("about-panel");
@@ -264,8 +267,12 @@
   function renderOptions(list) {
     optionsNav.innerHTML = "";
     if (!list || list.length === 0) return;
+    const visible = list.filter(
+      (opt) => !opt.ifNotYet || !visited.has(opt.target),
+    );
+    if (visible.length === 0) return;
     const ul = document.createElement("ul");
-    for (const opt of list) {
+    for (const opt of visible) {
       const li = document.createElement("li");
       const a = document.createElement("a");
       a.href = "#";
@@ -281,6 +288,7 @@
   function appendNodeBlock(nodeId) {
     const node = nodes[nodeId];
     if (!node) return;
+    visited.add(nodeId);
     const article = document.createElement("article");
     article.className = "story-node";
     article.dataset.node = nodeId;

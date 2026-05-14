@@ -1,5 +1,5 @@
 ---
-title: Démo histoire
+title: Les mémoires d'Encelade
 version: "0.1.0"
 author: Auteurice
 email: hello@example.com
@@ -18,8 +18,8 @@ debut
     Le bruit des bottes fait trembler les fenêtres encore intactes de la salle du trône où sont regroupés vos plus proches fidèles.
     "Ma reine, l'armée de Cylian a pénétré le château. Quels sont vos ordres ?"
     --
-    (ifnotyet)([Lentement se servir du thé](thé))
-    (ifnotyet)([Regarder vos sujets](sujets))
+    ifnotyet [Lentement se servir du thé](thé)
+    ifnotyet [Regarder vos sujets](sujets)
     [Faire du discours](discours)
 
 thé
@@ -27,6 +27,17 @@ thé
 
     Mais en portant la tasse à vos lèvres, vous ne l'appréciez pas. Vos émotions sont ailleurs. Ce parfum qui vous rendait forte semble comme vous rappeler à quel point vous êtes devenue petite, toute petite.
     --
-    (ifnotyet)([Lentement se servir du thé](thé))
-    (ifnotyet)([Regarder vos sujets](sujets))
+    ifnotyet [Lentement se servir du thé](thé)
+    ifnotyet [Regarder vos sujets](sujets)
     [Faire du discours](discours)
+
+sujets
+    Vous vous asseyez sur votre trône et regardez vos sujets.
+    --
+    ifnotyet [Lentement se servir du thé](thé)
+    ifnotyet [Regarder vos sujets](sujets)
+    [Faire du discours](discours)
+
+discours
+    Vous vous asseyez sur votre trône et faites votre discours.
+    --

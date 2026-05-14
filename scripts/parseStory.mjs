@@ -46,9 +46,31 @@ function splitBodyAndOptions(rawLines) {
 function parseOptionsMarkdown(optMd) {
   const options = [];
   const linkRe = /\[([^\]]*)\]\(([^)]+)\)/g;
-  let lm;
-  while ((lm = linkRe.exec(optMd)) !== null) {
-    options.push({ label: lm[1].trim(), target: lm[2].trim() });
+  const lines = optMd.split(/\r?\n/);
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line) continue;
+
+    let ifNotYet = false;
+    let searchIn = line;
+    if (/^ifnotyet\s+/i.test(line)) {
+      ifNotYet = true;
+      searchIn = line.replace(/^ifnotyet\s+/i, "").trim();
+    } else {
+      const wm = /^\(ifnotyet\)\s*\(\s*([\s\S]*?)\s*\)\s*$/.exec(line);
+      if (wm) {
+        ifNotYet = true;
+        searchIn = wm[1].trim();
+      }
+    }
+
+    const re = new RegExp(linkRe.source, "g");
+    let lm;
+    while ((lm = re.exec(searchIn)) !== null) {
+      const opt = { label: lm[1].trim(), target: lm[2].trim() };
+      if (ifNotYet) opt.ifNotYet = true;
+      options.push(opt);
+    }
   }
   return options;
 }
