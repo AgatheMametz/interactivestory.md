@@ -16,6 +16,7 @@ _css
         font-family: "PT Serif", serif;
         font-size: 1.2rem;
         line-height: 1.5;
+        margin-top: 3rem;
     }
     a {
         color:rgb(8, 105, 165);

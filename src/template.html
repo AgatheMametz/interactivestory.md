@@ -34,7 +34,7 @@
       }
       .story-node > .para-fade {
         opacity: 0;
-        animation: para-fade-in 0.4s ease forwards;
+        animation: para-fade-in 2.2s ease forwards;
         animation-delay: var(--para-d, 0ms);
       }
       @keyframes para-fade-in {
@@ -68,6 +68,10 @@
       }
       footer details {
         margin-top: 0.5rem;
+      }
+      #story-reset {
+        display: inline-block;
+        margin-bottom: 0.75rem;
       }
       #vars-panel table,
       #about-panel table {
@@ -104,6 +108,7 @@
     </main>
     <footer>
       <div style="max-width: 500px; margin: 0 auto">
+        <a id="story-reset" href="#">Repartir du début</a>
         <details>
           <summary>About this story</summary>
           <div id="about-panel"></div>

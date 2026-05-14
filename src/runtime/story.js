@@ -5,6 +5,14 @@
   const STORY = JSON.parse(dataEl.textContent);
   const { meta, nodes } = STORY;
 
+  const STORAGE_SAVE_VERSION = 1;
+  const STORAGE_PREFIX = "interactivestory_v1_";
+
+  /** Ordre des passages affichés (persisté au reload). */
+  const nodeHistory = [];
+  /** Pendant la restauration, ne pas réécrire localStorage à chaque nœud. */
+  let restorePass = false;
+
   /** @type {Record<string, string|number|boolean>} */
   const vars = {};
 
@@ -65,6 +73,120 @@
 
   function escapeAttr(s) {
     return escapeHtml(s).replace(/'/g, "&#39;");
+  }
+
+  function computeFingerprint() {
+    return `${meta.start}|${String(meta.version ?? "")}|${Object.keys(nodes).length}`;
+  }
+
+  function getStorageKey() {
+    const title = meta.title || "story";
+    const safeTitle = encodeURIComponent(title).slice(0, 100);
+    const start = encodeURIComponent(String(meta.start ?? ""));
+    return `${STORAGE_PREFIX}${safeTitle}_${start}`;
+  }
+
+  function snapshotVarsEqual(a, b) {
+    const keysA = Object.keys(a).sort();
+    const keysB = Object.keys(b).sort();
+    if (keysA.length !== keysB.length) return false;
+    for (const k of keysA) {
+      if (!valuesEqual(a[k], b[k])) return false;
+    }
+    return true;
+  }
+
+  function visitedMatchesSaved(set, arr) {
+    if (!Array.isArray(arr) || set.size !== arr.length) return false;
+    for (const x of arr) {
+      if (!set.has(x)) return false;
+    }
+    return true;
+  }
+
+  function validateNodeHistory(ids) {
+    return (
+      Array.isArray(ids) &&
+      ids.length > 0 &&
+      ids.every((id) => typeof id === "string" && nodes[id])
+    );
+  }
+
+  function readSave() {
+    try {
+      const raw = localStorage.getItem(getStorageKey());
+      if (!raw) return null;
+      const o = JSON.parse(raw);
+      if (
+        !o ||
+        o.v !== STORAGE_SAVE_VERSION ||
+        typeof o.fingerprint !== "string" ||
+        o.fingerprint !== computeFingerprint() ||
+        !validateNodeHistory(o.nodeHistory) ||
+        !o.vars ||
+        typeof o.vars !== "object" ||
+        !Array.isArray(o.visited)
+      )
+        return null;
+      return o;
+    } catch {
+      return null;
+    }
+  }
+
+  function persistState() {
+    try {
+      localStorage.setItem(
+        getStorageKey(),
+        JSON.stringify({
+          v: STORAGE_SAVE_VERSION,
+          fingerprint: computeFingerprint(),
+          nodeHistory: nodeHistory.slice(),
+          vars: { ...vars },
+          visited: [...visited],
+        }),
+      );
+    } catch {
+      /* quota ou mode privé */
+    }
+  }
+
+  function wipeRuntimeDomAndState() {
+    if (chronicle) chronicle.replaceChildren();
+    if (optionsNav) optionsNav.innerHTML = "";
+    visited.clear();
+    nodeHistory.length = 0;
+    for (const k of Object.keys(vars)) delete vars[k];
+  }
+
+  /**
+   * Rejoue l’historique depuis zéro (les (set:) du corps reconstituent `vars`).
+   * @returns {boolean}
+   */
+  function tryRestoreFromSave(saved) {
+    wipeRuntimeDomAndState();
+    restorePass = true;
+    for (const id of saved.nodeHistory) {
+      const node = nodes[id];
+      if (!node) {
+        restorePass = false;
+        wipeRuntimeDomAndState();
+        return false;
+      }
+      appendNodeBlock(id);
+    }
+    restorePass = false;
+    const historyOk =
+      nodeHistory.length === saved.nodeHistory.length &&
+      saved.nodeHistory.every((id, i) => nodeHistory[i] === id);
+    const stateOk =
+      snapshotVarsEqual(vars, saved.vars) &&
+      visitedMatchesSaved(visited, saved.visited);
+    if (!historyOk || !stateOk) {
+      wipeRuntimeDomAndState();
+      return false;
+    }
+    return true;
   }
 
   function parseLiteral(raw) {
@@ -370,9 +492,9 @@
   }
 
   /** Durée du fondu d’un bloc (paragraphe / titre / liste, etc.). */
-  const PARA_FADE_MS = 400;
+  const PARA_FADE_MS = 2200;
   /** Délai entre le début du fondu de chaque bloc enfant du nœud. */
-  const PARA_STAGGER_MS = 100;
+  const PARA_STAGGER_MS = 750;
   /** Délai entre chaque option après la fin du contenu (ms). */
   const OPTION_STAGGER_MS = 100;
 
@@ -428,10 +550,15 @@
   function appendNodeBlock(nodeId) {
     const node = nodes[nodeId];
     if (!node) return;
+    nodeHistory.push(nodeId);
     visited.add(nodeId);
     pendingChronicleClear = false;
     const processed = processMarkers(node.bodyMd);
-    if (pendingChronicleClear) chronicle.replaceChildren();
+    if (pendingChronicleClear) {
+      chronicle.replaceChildren();
+      window.scrollTo(0, 0);
+      chronicle.scrollTop = 0;
+    }
     const article = document.createElement("article");
     article.className = "story-node";
     article.dataset.node = nodeId;
@@ -440,6 +567,7 @@
     chronicle.appendChild(article);
     renderOptions(node, contentDoneMs);
     renderVars();
+    if (!restorePass) persistState();
   }
 
   function goToNode(nodeId) {
@@ -487,5 +615,25 @@
   }
 
   document.title = meta.title || document.title;
-  appendNodeBlock(meta.start);
+
+  const resetLink = document.getElementById("story-reset");
+  if (resetLink) {
+    resetLink.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      try {
+        localStorage.removeItem(getStorageKey());
+      } catch {
+        /* ignore */
+      }
+      location.reload();
+    });
+  }
+
+  const saved = readSave();
+  if (saved && tryRestoreFromSave(saved)) {
+    persistState();
+    if (chronicle) chronicle.scrollTop = chronicle.scrollHeight;
+  } else {
+    appendNodeBlock(meta.start);
+  }
 })();
