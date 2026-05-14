@@ -233,18 +233,18 @@ pitié
 regarder_autour_de_vous_pitie
     Ce garde qui vous regarde avec pitié a l'air moins dangereux que les autres. En entendant votre voix cassée par la douleur, son visage s'est déformé en une grimace. Il n'est clairement pas à l'aise avec ce qu'il est en train de faire.
 
-    Vous remarquez que il fait tomber une relique de ses bras.
+    Vous remarquez que il fait tomber une $relique$ de ses bras.
 
     (set: garde_pitie true)
 
         (ifnotyet)([Vérifier les chaînes](vérifier_chaînes))
         (ifnotyet)([Demander pitié](pitié))
         (ifnotyet)([Tendre l'oreille](tendre_oreille))
-        (if: garde_pitie = true)([Prendre la relique](prendre_relique))
+        (if: garde_pitie = true)([$Prendre la relique$](prendre_relique))
 
 
 réfléchir_à_un_plan
-    Rien ne vous vient à l'esprit.
+    Rien ne vous vient à l'esprit
 
     (clear)
         Vous continuez de marcher.
@@ -255,8 +255,8 @@ réfléchir_à_un_plan
         (ifnotyet)([Réfléchir à un plan](réfléchir_à_un_plan))
         (ifnotyet)([Demander pitié](pitié))
         (ifnotyet)([Tendre l'oreille](tendre_oreille))
-        (if: garde_pitie = true)([Prendre la relique](prendre_relique))
+        (if: garde_pitie = true)([$Prendre la relique$](prendre_relique))
 
-attaquer_garde_pitie
+prendre_relique
     (clear)
-    Vous attaquez le garde qui vous regarde avec pitié.
+    (fx: glitch++)

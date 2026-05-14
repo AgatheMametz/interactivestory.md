@@ -237,6 +237,15 @@
     });
   }
 
+  /** `$texte$` → span effet glitch (texte échappé, pas de Markdown à l’intérieur). */
+  function applyGlitchMarkers(s) {
+    return s.replace(/\$([^$]+)\$/gu, (_, inner) => {
+      const text = String(inner);
+      const esc = escapeHtml(text);
+      return `<span class="text-glitch" data-text="${escapeAttr(text)}">${esc}</span>`;
+    });
+  }
+
   /** Si le fragment est uniquement un id de node connu, en faire un lien Markdown. */
   function ensureStoryLinkIfBareNodeId(fragment) {
     const t = fragment.trim();
@@ -404,6 +413,7 @@
 
     out = replaceConditionalMarkers(out, depth, ctx);
     out = expandVars(out);
+    out = applyGlitchMarkers(out);
     if (!ctx.skipClear) {
       out = out.replace(/\(\s*clear\s*\)/gi, () => {
         pendingChronicleClear = true;
@@ -539,7 +549,8 @@
       a.href = "#";
       a.className = "story-goto";
       a.dataset.node = opt.target;
-      a.textContent = opt.label;
+      if (opt.label.includes("<")) a.innerHTML = opt.label;
+      else a.textContent = opt.label;
       li.appendChild(a);
       ul.appendChild(li);
     }

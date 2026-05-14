@@ -48,18 +48,19 @@ export function buildStory(mdPath) {
     nodes: story.nodes,
   });
 
-  html = html.replace("{{STORY_JSON}}", storyJson);
-  html = html.replace("{{MARKED_LIB}}", readMarkedUmd());
-  html = html.replace(
-    "{{RUNTIME}}",
+  // Remplacer par une fonction : sinon `$` dans le contenu (ex. `` `$x$` `` dans story.js)
+  // est interprété comme motif de substitution (`$` + `` ` `` = texte avant le match, etc.).
+  html = html.replace("{{STORY_JSON}}", () => storyJson);
+  html = html.replace("{{MARKED_LIB}}", () => readMarkedUmd());
+  html = html.replace("{{RUNTIME}}", () =>
     readFileSync(join(root, "src/runtime/story.js"), "utf8"),
   );
 
   const extraCss = story.css.trim();
   if (extraCss) {
-    html = html.replace("/* {{EXTRA_CSS}} */", extraCss);
+    html = html.replace("/* {{EXTRA_CSS}} */", () => extraCss);
   } else {
-    html = html.replace("/* {{EXTRA_CSS}} */", "");
+    html = html.replace("/* {{EXTRA_CSS}} */", () => "");
   }
 
   const outDir = join(root, "dist");

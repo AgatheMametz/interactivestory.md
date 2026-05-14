@@ -8,6 +8,8 @@
       :root {
         font-family: system-ui, sans-serif;
         line-height: 1.5;
+        /* Fond derrière les tranches du glitch (comme le #050814 du CodePen) ; surcharger dans _css si besoin */
+        --text-glitch-slice-bg: Canvas;
       }
       body {
         margin: 0;
@@ -107,6 +109,145 @@
       #vars-panel code,
       #about-panel code {
         font-size: 0.85em;
+      }
+
+      /* $…$ → .text-glitch (adapté de https://codepen.io/Kathleen-Garrity/pen/PwGwGKR — 404 glitch, calques + pauses) */
+      .text-glitch {
+        position: relative;
+        display: inline-block;
+        color: inherit;
+        font-weight: inherit;
+        line-height: inherit;
+        isolation: isolate;
+        text-shadow:
+          0 0 0.28em rgba(0, 240, 255, 0.42),
+          -0.065em 0 0 rgba(255, 0, 234, 0.52),
+          0.065em 0 0 rgba(0, 85, 255, 0.52),
+          0.07em 0.06em 0 rgba(12, 8, 34, 0.24);
+      }
+      .text-glitch::before,
+      .text-glitch::after {
+        content: attr(data-text);
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        color: inherit;
+        background: var(--text-glitch-slice-bg);
+        opacity: 1;
+      }
+      .text-glitch::before {
+        text-shadow: -0.075em 0 #ff00ea, 0.075em 0 #0055ff;
+        animation: text-glitch-k1 1.85s infinite linear;
+        z-index: 1;
+      }
+      .text-glitch::after {
+        text-shadow: 0.075em 0 #00ffff, -0.075em 0 #6600ff;
+        animation: text-glitch-k2 2.2s infinite linear;
+        z-index: 2;
+      }
+      @keyframes text-glitch-k1 {
+        0% {
+          clip-path: inset(10% 0 84% 0);
+          transform: translateX(-0.1em);
+          opacity: 1;
+        }
+        8% {
+          clip-path: inset(38% 0 55% 0);
+          transform: translateX(0.08em);
+          opacity: 1;
+        }
+        16% {
+          clip-path: inset(72% 0 21% 0);
+          transform: translateX(-0.12em);
+          opacity: 1;
+        }
+        24% {
+          clip-path: inset(22% 0 68% 0);
+          transform: translateX(0.1em);
+          opacity: 1;
+        }
+        32% {
+          clip-path: inset(58% 0 32% 0);
+          transform: translateX(-0.07em);
+          opacity: 1;
+        }
+        40% {
+          clip-path: inset(5% 0 87% 0);
+          transform: translateX(0.12em);
+          opacity: 1;
+        }
+        48% {
+          clip-path: inset(44% 0 46% 0);
+          transform: translateX(-0.09em);
+          opacity: 1;
+        }
+        52%,
+        100% {
+          opacity: 0;
+          clip-path: inset(44% 0 46% 0);
+          transform: translateX(-0.09em);
+        }
+      }
+      @keyframes text-glitch-k2 {
+        0% {
+          clip-path: inset(18% 0 75% 0);
+          transform: translateX(0.09em);
+          opacity: 1;
+        }
+        7% {
+          clip-path: inset(66% 0 26% 0);
+          transform: translateX(-0.1em);
+          opacity: 1;
+        }
+        14% {
+          clip-path: inset(8% 0 84% 0);
+          transform: translateX(0.12em);
+          opacity: 1;
+        }
+        21% {
+          clip-path: inset(50% 0 40% 0);
+          transform: translateX(-0.07em);
+          opacity: 1;
+        }
+        28% {
+          clip-path: inset(82% 0 10% 0);
+          transform: translateX(0.1em);
+          opacity: 1;
+        }
+        36% {
+          clip-path: inset(30% 0 62% 0);
+          transform: translateX(-0.11em);
+          opacity: 1;
+        }
+        44% {
+          clip-path: inset(12% 0 80% 0);
+          transform: translateX(0.08em);
+          opacity: 1;
+        }
+        48%,
+        100% {
+          opacity: 0;
+          clip-path: inset(12% 0 80% 0);
+          transform: translateX(0.08em);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .text-glitch::before,
+        .text-glitch::after {
+          animation: none;
+          opacity: 0.6;
+          clip-path: inset(46% 0 48% 0);
+        }
+        .text-glitch::before {
+          transform: translateX(-0.04em);
+        }
+        .text-glitch::after {
+          clip-path: inset(10% 0 84% 0);
+          transform: translateX(0.04em);
+        }
       }
       /* {{EXTRA_CSS}} */
     </style>
