@@ -103,14 +103,16 @@
       <nav id="options" aria-label="Choix"></nav>
     </main>
     <footer>
-      <details>
-        <summary>About this story</summary>
-        <div id="about-panel"></div>
-      </details>
-      <details>
-        <summary>Variables</summary>
-        <div id="vars-panel" aria-live="polite"></div>
-      </details>
+      <div style="max-width: 800px; margin: 0 auto">
+        <details>
+          <summary>About this story</summary>
+          <div id="about-panel"></div>
+        </details>
+        <details>
+          <summary>Variables</summary>
+          <div id="vars-panel" aria-live="polite"></div>
+        </details>
+      </div>
     </footer>
     <script type="application/json" id="story-data">{{STORY_JSON}}</script>
     <script>
