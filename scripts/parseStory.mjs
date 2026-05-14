@@ -142,13 +142,11 @@ export function parseStoryMarkdown(fileContent) {
     order.push(ch.id);
   }
 
+  const fm = data && typeof data === "object" ? data : {};
   const meta = {
-    title: data.title ?? "Untitled",
-    version: data.version ?? "",
-    author: data.author ?? "",
-    email: data.email ?? "",
-    link: data.link ?? "",
-    start: data.start ?? order[0] ?? null,
+    ...fm,
+    title: fm.title ?? "Untitled",
+    start: fm.start ?? order[0] ?? null,
   };
   if (!meta.start || !nodes[meta.start]) {
     throw new Error(

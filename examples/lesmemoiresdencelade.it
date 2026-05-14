@@ -9,6 +9,20 @@ start: debut
 
 _css
 	```css
+    body {
+        background-color:rgb(49, 43, 32);
+        color: white;
+        font-family: serif;
+        font-size: 1.4rem;
+        line-height: 1.5;
+    }
+    a {
+        color:rgb(255, 174, 0);
+        text-decoration: none;
+    }
+    a:hover {
+        text-decoration: underline;
+    }
 	main {
 		max-width: 42rem;
 	}

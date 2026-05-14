@@ -333,16 +333,50 @@
     };
   }
 
-  function renderOptions(node) {
+  /** Durée du fondu d’un bloc (paragraphe / titre / liste, etc.). */
+  const PARA_FADE_MS = 400;
+  /** Délai entre le début du fondu de chaque bloc enfant du nœud. */
+  const PARA_STAGGER_MS = 100;
+  /** Délai entre chaque option après la fin du contenu (ms). */
+  const OPTION_STAGGER_MS = 100;
+
+  /**
+   * Fondu bloc par bloc sur les enfants directs de l’article (sortie Markdown).
+   * @returns {number} ms jusqu’à la fin du fondu du dernier bloc (0 si aucun bloc).
+   */
+  function applyParagraphFades(articleEl) {
+    const blocks = Array.from(articleEl.children);
+    let i = 0;
+    for (const el of blocks) {
+      el.classList.add("para-fade");
+      el.style.setProperty("--para-d", `${i * PARA_STAGGER_MS}ms`);
+      i += 1;
+    }
+    if (blocks.length === 0) return 0;
+    return (blocks.length - 1) * PARA_STAGGER_MS + PARA_FADE_MS;
+  }
+
+  /**
+   * @param {object} node
+   * @param {number} baseDelayMs délai avant la 1re option (après le dernier paragraphe).
+   */
+  function renderOptions(node, baseDelayMs = 0) {
     const lines = normalizeOptionLines(node);
     optionsNav.innerHTML = "";
     if (lines.length === 0) return;
     const ul = document.createElement("ul");
+    let optionIndex = 0;
     for (const line of lines) {
       const opt = choiceFromOptionLine(line);
       if (!opt) continue;
       if (opt.ifNotYet && visited.has(opt.target)) continue;
       const li = document.createElement("li");
+      li.className = "option-fade";
+      li.style.setProperty(
+        "--opt-d",
+        `${baseDelayMs + optionIndex * OPTION_STAGGER_MS}ms`,
+      );
+      optionIndex += 1;
       const a = document.createElement("a");
       a.href = "#";
       a.className = "story-goto";
@@ -366,8 +400,9 @@
     article.className = "story-node";
     article.dataset.node = nodeId;
     article.innerHTML = marked.parse(processed, { async: false });
+    const contentDoneMs = applyParagraphFades(article);
     chronicle.appendChild(article);
-    renderOptions(node);
+    renderOptions(node, contentDoneMs);
     renderVars();
   }
 
@@ -386,18 +421,33 @@
     if (id) goToNode(id);
   });
 
+  function formatAboutValue(v) {
+    if (v === undefined) return "";
+    if (v === null) return "null";
+    if (typeof v === "boolean") return String(v);
+    if (typeof v === "number" && Number.isFinite(v)) return String(v);
+    if (typeof v === "string") return v;
+    try {
+      return JSON.stringify(v);
+    } catch {
+      return String(v);
+    }
+  }
+
   if (aboutPanel) {
-    const bits = [
-      meta.version && `<p><strong>Version</strong> ${escapeHtml(meta.version)}</p>`,
-      meta.author && `<p><strong>Auteur</strong> ${escapeHtml(meta.author)}</p>`,
-      meta.email &&
-        `<p><strong>Mail</strong> <a href="mailto:${escapeAttr(meta.email)}">${escapeHtml(meta.email)}</a></p>`,
-      meta.link &&
-        `<p><strong>Lien</strong> <a href="${escapeAttr(meta.link)}" rel="noopener noreferrer">${escapeHtml(meta.link)}</a></p>`,
-    ]
-      .filter(Boolean)
-      .join("");
-    aboutPanel.innerHTML = bits || "<p>(aucune métadonnée)</p>";
+    const keys = Object.keys(meta).sort((a, b) => a.localeCompare(b, "fr"));
+    if (keys.length === 0) {
+      aboutPanel.innerHTML = "<p>(aucune métadonnée)</p>";
+    } else {
+      const rows = keys
+        .map((k) => {
+          const raw = formatAboutValue(meta[k]);
+          const display = escapeHtml(raw).replace(/\n/g, "<br />");
+          return `<tr><th scope="row"><code>${escapeHtml(k)}</code></th><td>${display}</td></tr>`;
+        })
+        .join("");
+      aboutPanel.innerHTML = `<table class="about-meta"><tbody>${rows}</tbody></table>`;
+    }
   }
 
   document.title = meta.title || document.title;

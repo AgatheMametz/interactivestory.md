@@ -32,6 +32,32 @@
         display: inline-block;
         margin: 0.25rem 0;
       }
+      .story-node > .para-fade {
+        opacity: 0;
+        animation: para-fade-in 0.4s ease forwards;
+        animation-delay: var(--para-d, 0ms);
+      }
+      @keyframes para-fade-in {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      #options li.option-fade {
+        opacity: 0;
+        animation: option-fade-in 0.4s ease forwards;
+        animation-delay: var(--opt-d, 0ms);
+      }
+      @keyframes option-fade-in {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
       footer {
         border-top: 1px solid #ddd;
         padding: 0.75rem 1rem;
@@ -43,23 +69,29 @@
       footer details {
         margin-top: 0.5rem;
       }
-      #vars-panel table {
+      #vars-panel table,
+      #about-panel table {
         border-collapse: collapse;
         width: 100%;
         max-width: 36rem;
+        border: none;
       }
       #vars-panel th,
-      #vars-panel td {
-        border: 1px solid #ddd;
-        padding: 0.25rem 0.5rem;
+      #vars-panel td,
+      #about-panel th,
+      #about-panel td {
+        border: none;
+        border-bottom: 1px solid #ddd;
+        padding: 0.35rem 0;
         text-align: left;
         vertical-align: top;
+        background: transparent;
       }
-      #vars-panel th {
-        background: #f5f5f5;
+      #vars-panel thead th {
         font-weight: 600;
       }
-      #vars-panel code {
+      #vars-panel code,
+      #about-panel code {
         font-size: 0.85em;
       }
       /* {{EXTRA_CSS}} */
@@ -75,7 +107,7 @@
         <summary>About this story</summary>
         <div id="about-panel"></div>
       </details>
-      <details open>
+      <details>
         <summary>Variables</summary>
         <div id="vars-panel" aria-live="polite"></div>
       </details>
