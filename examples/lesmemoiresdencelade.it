@@ -48,8 +48,8 @@ debut
 
     "Ma reine, l'armée de Cylian a pénétré le château. Quels sont vos ordres ?"
 
-        (ifnotyet)([Elle se sert lentement du thé](thé))
-        (ifnotyet)([Elle regarde ses sujets](sujets))
+        (once)([Elle se sert lentement du thé](thé))
+        (once)([Elle regarde ses sujets](sujets))
         [Elle fait un discours](discours)
 
 thé
@@ -59,7 +59,7 @@ thé
 
     Son échec.
 
-        (ifnotyet)([Ils mourront tous, et c'est sa faute](sujets))
+        (once)([Ils mourront tous, et c'est sa faute](sujets))
         ([Elle fait un discours](discours))
 
 sujets
@@ -68,9 +68,9 @@ sujets
 
     (set:sujet 0)
 
-        (ifnotyet)([Dame Pargot](pargot))
-        (ifnotyet)([Elphée](elphee))
-        (ifnotyet)([Duc Gontrant](gontrant))
+        (once)([Dame Pargot](pargot))
+        (once)([Elphée](elphee))
+        (once)([Duc Gontrant](gontrant))
         (if:sujet = 3)([Elle fait un discours](discours))
 
 elphee
@@ -78,27 +78,27 @@ elphee
 
     Debout au fond de la salle, elle voit **Elphée**, sa gouvernante. Elphée a perdu son mari la veille lors d'une percée des Cylians, mais son devoir envers la reine l'oblige. Envers et contre tout, elle reste digne.
 
-        (ifnotyet)([Dame Pargot](pargot))
-        (ifnotyet)([Duc Gontrant](gontrant))
-        (ifnotyet)([Elphée](elphee))
+        (once)([Dame Pargot](pargot))
+        (once)([Duc Gontrant](gontrant))
+        (once)([Elphée](elphee))
         (if:sujet = 3)([Elle fait un discours](discours))
 
 pargot
     (set:sujet++)
     À coté d'elle, entourée de ses enfants, **Dame Pargot**, fidèle des fidèles, décomposée. La reine est déçue de l'avoir déçue. 
 
-        (ifnotyet)([Dame Pargot](pargot))
-        (ifnotyet)([Elphée](elphee))
-        (ifnotyet)([Duc Gontrant](gontrant))
+        (once)([Dame Pargot](pargot))
+        (once)([Elphée](elphee))
+        (once)([Duc Gontrant](gontrant))
         (if:sujet = 3)([Elle fait un discours](discours))
 
 gontrant
     (set:sujet++)
     Et puis tous les autres. Les vieillards qui se sont regroupés dans la salle du trône, les enfants, les gardes les plus jeunes. Ha oui et bien sûr, celui qui s'était en premier porté volontaire pour rester avec celles et ceux à protéger : le **Duc Gontrant de Batis'Delia**...
 
-        (ifnotyet)([Dame Pargot](pargot))
-        (ifnotyet)([Elphée](elphee))
-        (ifnotyet)([Duc Gontrant](gontrant))
+        (once)([Dame Pargot](pargot))
+        (once)([Elphée](elphee))
+        (once)([Duc Gontrant](gontrant))
         (if:sujet = 3)([Elle fait un discours](discours))
 
 discours
@@ -163,12 +163,12 @@ vérifier_chaînes
 
         Vous continuez de marcher.
 
-        (ifnotyet)([Vérifier les chaînes](vérifier_chaînes))
+        (once)([Vérifier les chaînes](vérifier_chaînes))
         (if:pitié = false)([Regarder autour de vous](regarder_autour_de_vous))
         (if:pitié = true)([Regarder autour de vous](regarder_autour_de_vous_pitie))
-        (ifnotyet)([Réfléchir à un plan](réfléchir_à_un_plan))
-        (ifnotyet)([Demander pitié](pitié))
-        (ifnotyet)([Tendre l'oreille](tendre_oreille))
+        (once)([Réfléchir à un plan](réfléchir_à_un_plan))
+        (once)([Demander pitié](pitié))
+        (once)([Tendre l'oreille](tendre_oreille))
         (if: garde_pitie = true)([$Prendre la relique$](prendre_relique))(fx: glitch)
 
 tendre_oreille
@@ -182,12 +182,12 @@ tendre_oreille
 
         Vous continuez de marcher.
 
-        (ifnotyet)([Vérifier les chaînes](vérifier_chaînes))
+        (once)([Vérifier les chaînes](vérifier_chaînes))
         (if:pitié = false)([Regarder autour de vous](regarder_autour_de_vous))
         (if:pitié = true)([Regarder autour de vous](regarder_autour_de_vous_pitie))
-        (ifnotyet)([Réfléchir à un plan](réfléchir_à_un_plan))
-        (ifnotyet)([Demander pitié](pitié))
-        (ifnotyet)([Tendre l'oreille](tendre_oreille))
+        (once)([Réfléchir à un plan](réfléchir_à_un_plan))
+        (once)([Demander pitié](pitié))
+        (once)([Tendre l'oreille](tendre_oreille))
         (if: garde_pitie = true)([$Prendre la relique$](prendre_relique))(fx: glitch)
 
 regarder_autour_de_vous
@@ -203,12 +203,12 @@ regarder_autour_de_vous
 
         Vous continuez de marcher.
 
-        (ifnotyet)([Vérifier les chaînes](vérifier_chaînes))
+        (once)([Vérifier les chaînes](vérifier_chaînes))
         (if:pitié = false)([Regarder autour de vous](regarder_autour_de_vous))
         (if:pitié = true)([Regarder autour de vous](regarder_autour_de_vous_pitie))
-        (ifnotyet)([Réfléchir à un plan](réfléchir_à_un_plan))
-        (ifnotyet)([Demander pitié](pitié))
-        (ifnotyet)([Tendre l'oreille](tendre_oreille))
+        (once)([Réfléchir à un plan](réfléchir_à_un_plan))
+        (once)([Demander pitié](pitié))
+        (once)([Tendre l'oreille](tendre_oreille))
         (if: garde_pitie = true)([$Prendre la relique$](prendre_relique))(fx: glitch)
 
 pitié
@@ -226,12 +226,12 @@ pitié
 
         Vous continuez de marcher.
 
-        (ifnotyet)([Vérifier les chaînes](vérifier_chaînes))
+        (once)([Vérifier les chaînes](vérifier_chaînes))
         (if:pitié = false)([Regarder autour de vous](regarder_autour_de_vous))
         (if:pitié = true)([Regarder autour de vous](regarder_autour_de_vous_pitie))
-        (ifnotyet)([Réfléchir à un plan](réfléchir_à_un_plan))
-        (ifnotyet)([Demander pitié](pitié))
-        (ifnotyet)([Tendre l'oreille](tendre_oreille))
+        (once)([Réfléchir à un plan](réfléchir_à_un_plan))
+        (once)([Demander pitié](pitié))
+        (once)([Tendre l'oreille](tendre_oreille))
 
 regarder_autour_de_vous_pitie
     Ce garde qui vous regarde avec pitié a l'air moins dangereux que les autres. En entendant votre voix cassée par la douleur, son visage s'est déformé en une grimace. Il n'est clairement pas à l'aise avec ce qu'il est en train de faire.
@@ -240,9 +240,9 @@ regarder_autour_de_vous_pitie
 
     (set: garde_pitie true)
 
-        (ifnotyet)([Vérifier les chaînes](vérifier_chaînes))
-        (ifnotyet)([Demander pitié](pitié))
-        (ifnotyet)([Tendre l'oreille](tendre_oreille))
+        (once)([Vérifier les chaînes](vérifier_chaînes))
+        (once)([Demander pitié](pitié))
+        (once)([Tendre l'oreille](tendre_oreille))
         (if: garde_pitie = true)([$Prendre la relique$](prendre_relique))(fx: glitch)
 
 
@@ -254,12 +254,12 @@ réfléchir_à_un_plan
     (clear)
         Vous continuez de marcher.
 
-        (ifnotyet)([Vérifier les chaînes](vérifier_chaînes))
+        (once)([Vérifier les chaînes](vérifier_chaînes))
         (if:pitié = false)([Regarder autour de vous](regarder_autour_de_vous))
         (if:pitié = true)([Regarder autour de vous](regarder_autour_de_vous_pitie))
-        (ifnotyet)([Réfléchir à un plan](réfléchir_à_un_plan))
-        (ifnotyet)([Demander pitié](pitié))
-        (ifnotyet)([Tendre l'oreille](tendre_oreille))
+        (once)([Réfléchir à un plan](réfléchir_à_un_plan))
+        (once)([Demander pitié](pitié))
+        (once)([Tendre l'oreille](tendre_oreille))
         (if: garde_pitie = true)([$Prendre la relique$](prendre_relique))(fx: glitch)
 
 prendre_relique
@@ -443,8 +443,8 @@ attaquer_garde
 
     Vous vous retournez et voyez les deux autres gardes qui se précipitent vers vous. L'un d'eux, un homme âgé avec une barbe tressée, vous hurle : "Rendez-vous !"
 
-        (ifnotyet)([Tuer un deuxième garde](attaquer_garde_deuxième_garde))
-        (ifnotyet)([Se libérer](se_liberer))
+        (once)([Tuer un deuxième garde](attaquer_garde_deuxième_garde))
+        (once)([Se libérer](se_liberer))
         (if: libre = true)([Se mettre à courrir](se_mettre_à_courrir))
 
 attaquer_garde_deuxième_garde
@@ -455,7 +455,7 @@ attaquer_garde_deuxième_garde
     Le garde esssaye de reculer, mais sa lance est trop longue. Il trébuche et tombe sur le sol.
 
         [Tuer le deuxième garde](tuer_deuxième_garde)
-        (ifnotyet)([Se libérer](se_liberer))
+        (once)([Se libérer](se_liberer))
 
 tuer_deuxième_garde
     Vous vous ruez sur lui et lui plantez votre dague dans le cœur.
@@ -469,7 +469,7 @@ tuer_deuxième_garde
     "AAAH !"
 
         (if: nbr_gardes = 1)([Tuer le dernier garde](tuer_dernier_garde))
-        (ifnotyet)([Se libérer](se_liberer))
+        (once)([Se libérer](se_liberer))
         (if: libre = true)([Se mettre à courrir](se_mettre_à_courrir))
 
 tuer_dernier_garde
@@ -481,7 +481,7 @@ tuer_dernier_garde
 
     Les trois gardes sont morts.
 
-        (ifnotyet)([Se libérer](se_liberer))
+        (once)([Se libérer](se_liberer))
         (if: libre = true)([Se mettre à courrir](se_mettre_à_courrir))
 
 se_mettre_à_courrir_sans_garde
@@ -499,11 +499,23 @@ se_mettre_à_courrir_sans_garde
     (goto: porte_fermée)
 
 porte_fermée
-        [Ouvrir](tenter_d_ouvrir_la_porte)
-        [Écouter à la porte](écouter_à_la_porte)
-        [Appeler le pouvoir de la dague](appeler_le_pouvoir_de_la_dague)(fx: glitch)
+    Vous êtes devant la grande porte qui mène à la salle du trône. Elle est fermée.
+
+        (once)([Ouvrir](tenter_d_ouvrir_la_porte))
+        (once)([Écouter à la porte](écouter_à_la_porte))
+        (if: forcer_porte = true & once)([Forcer la porte](forcer_la_porte))
+        (once)([$Appeler le pouvoir de la dague$](appeler_le_pouvoir_de_la_dague))(fx: glitch)
 
 tenter_d_ouvrir_la_porte
-    Vous essayez d'ouvrir la porte, mais elle est fermée.
+    Vous essayez d'ouvrir la porte, mais elle est fermée
+
+    (set: forcer_porte true)
+
+    (goto: porte_fermée)
+
+forcer_la_porte
+    Vous essayez de forcer la porte, mais elle est trop solide.
+
+    (set: forcer_porte false)
 
     (goto: porte_fermée)

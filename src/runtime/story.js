@@ -16,7 +16,7 @@
   /** @type {Record<string, string|number|boolean>} */
   const vars = {};
 
-  /** Nœuds déjà affichés au moins une fois (pour `ifNotYet` sur les choix). */
+  /** Nœuds déjà affichés au moins une fois (pour `once` sur les choix). */
   const visited = new Set();
 
   /** Mis à `true` si `processMarkers` retire un `(clear)` du texte courant. */
@@ -281,9 +281,19 @@
     return parts.map((p) => p.trim()).filter(Boolean);
   }
 
-  function evalConditionAtom(expr) {
+  function firstMarkdownLinkTarget(s) {
+    const m = /\[([^\]]*)\]\(([^)]+)\)/.exec(s);
+    return m ? m[2].trim() : null;
+  }
+
+  function evalConditionAtom(expr, condCtx = {}) {
     const e = expr.trim();
     if (!e) return false;
+    if (/^once$/i.test(e)) {
+      const t = condCtx.optionTarget;
+      if (!t) return false;
+      return !visited.has(t);
+    }
     const cmp = /^([\p{L}_][\p{L}\p{N}_]*)\s*(>=|<=|!=|<>|>|<)\s*(.+)$/u.exec(
       e,
     );
@@ -312,21 +322,21 @@
   }
 
   /** Conditions composées : AND (`&`, `&&`, `and`) puis OR (`or`, `||`) — AND plus prioritaire. */
-  function evalCondition(expr) {
+  function evalCondition(expr, condCtx = {}) {
     const e = expr.trim();
     if (!e) return false;
     const orParts = splitLogical(e, "or");
     if (orParts.length > 1) {
       return orParts.some((part) => {
         const andParts = splitLogical(part, "and");
-        return andParts.every((atom) => evalConditionAtom(atom));
+        return andParts.every((atom) => evalConditionAtom(atom, condCtx));
       });
     }
     const andParts = splitLogical(e, "and");
     if (andParts.length > 1) {
-      return andParts.every((atom) => evalConditionAtom(atom));
+      return andParts.every((atom) => evalConditionAtom(atom, condCtx));
     }
-    return evalConditionAtom(e);
+    return evalConditionAtom(e, condCtx);
   }
 
   /** Affiche la valeur d’une variable dans le markdown (corps, ternaires, blocs binaires). */
@@ -723,22 +733,55 @@
 
       let k = blk.end + 1;
       while (k < out.length && /\s/.test(out[k])) k++;
-      const isBinary = k < out.length && out[k] === "(";
+      const isBinary =
+        k < out.length && (out[k] === "(" || out[k] === "[");
 
       let replacement = "";
       let replaceEnd = blk.end;
 
       if (isBinary) {
-        const blk2 = consumeParenBlock(out, k);
-        if (!blk2) {
-          pos = openIdx + 1;
-          continue;
+        let innerRaw = "";
+        if (out[k] === "(") {
+          const blk2 = consumeParenBlock(out, k);
+          if (!blk2) {
+            pos = openIdx + 1;
+            continue;
+          }
+          replaceEnd = blk2.end;
+          innerRaw = blk2.inner.trim();
+          if (/^once$/i.test(innerRaw)) {
+            let k3 = replaceEnd + 1;
+            while (k3 < out.length && /\s/.test(out[k3])) k3++;
+            if (out[k3] === "(") {
+              const blk3 = consumeParenBlock(out, k3);
+              if (blk3) {
+                innerRaw = blk3.inner.trim();
+                replaceEnd = blk3.end;
+              }
+            } else if (out[k3] === "[") {
+              const linkM = /^\[([^\]]*)\]\(([^)]+)\)/.exec(out.slice(k3));
+              if (linkM) {
+                innerRaw = linkM[0];
+                replaceEnd = k3 + linkM[0].length - 1;
+              }
+            }
+          }
+        } else {
+          const linkM = /^\[([^\]]*)\]\(([^)]+)\)/.exec(out.slice(k));
+          if (!linkM) {
+            pos = openIdx + 1;
+            continue;
+          }
+          innerRaw = linkM[0];
+          replaceEnd = k + linkM[0].length - 1;
         }
-        replaceEnd = blk2.end;
         const cond = parsed.body;
-        const innerRaw = blk2.inner.trim();
-        const take =
-          parsed.kind === "if" ? evalCondition(cond) : !evalCondition(cond);
+        const optionTarget = firstMarkdownLinkTarget(innerRaw);
+        const condCtx = optionTarget ? { optionTarget } : {};
+        let take =
+          parsed.kind === "if"
+            ? evalCondition(cond, condCtx)
+            : !evalCondition(cond, condCtx);
         if (take) {
           if (depth >= 12) {
             replacement = "";
@@ -936,7 +979,7 @@
     if (!node.options || !node.options.length) return [];
     return node.options.map((o) => {
       const core = `[${o.label}](${o.target})`;
-      return o.ifNotYet ? `ifnotyet ${core}` : core;
+      return o.once ? `once ${core}` : core;
     });
   }
 
@@ -959,14 +1002,14 @@
   /** Une ligne du bloc options : mêmes marqueurs que le corps (`(if:)`, `(set:)`, etc.). */
   function choiceFromOptionLine(line) {
     let s = line.trim();
-    let ifNotYet = false;
-    if (/^ifnotyet\s+/i.test(s)) {
-      ifNotYet = true;
-      s = s.replace(/^ifnotyet\s+/i, "").trim();
+    let once = false;
+    if (/^once\s+/i.test(s)) {
+      once = true;
+      s = s.replace(/^once\s+/i, "").trim();
     } else {
-      const mwrap = /^\(ifnotyet\)\s*\(\s*([\s\S]*?)\s*\)\s*$/.exec(s);
+      const mwrap = /^\(once\)\s*\(\s*([\s\S]*?)\s*\)\s*$/.exec(s);
       if (mwrap) {
-        ifNotYet = true;
+        once = true;
         s = mwrap[1].trim();
       }
     }
@@ -987,7 +1030,7 @@
     return {
       label: lm[1].trim(),
       target: lm[2].trim(),
-      ifNotYet,
+      once,
       pageFx,
       fxInvert,
     };
@@ -1035,7 +1078,7 @@
     for (const line of lines) {
       const opt = choiceFromOptionLine(line);
       if (!opt) continue;
-      if (opt.ifNotYet && visited.has(opt.target)) continue;
+      if (opt.once && visited.has(opt.target)) continue;
       const li = document.createElement("li");
       li.className = "option-fade";
       li.style.setProperty(

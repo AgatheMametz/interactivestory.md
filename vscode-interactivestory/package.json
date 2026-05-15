@@ -2,7 +2,7 @@
   "name": "interactivestory-md",
   "displayName": "Interactive Story (.it)",
   "description": "Coloration pour les passages indentés (corps / options), le front matter YAML.",
-  "version": "0.2.6",
+  "version": "0.3.11",
   "publisher": "interactivestory",
   "repository": {
     "type": "git",
@@ -12,8 +12,11 @@
     "vscode": "^1.80.0"
   },
   "categories": ["Programming Languages"],
+  "main": "./extension.js",
+  "activationEvents": ["onLanguage:interactivestory"],
   "scripts": {
-    "package": "npx --yes @vscode/vsce@latest package --no-dependencies --allow-missing-repository"
+    "package": "npx --yes @vscode/vsce@latest package --no-dependencies --allow-missing-repository",
+    "install:cursor": "npm run package && cursor --install-extension ./interactivestory-md-$(node -p \"require('./package.json').version\").vsix --force"
   },
   "contributes": {
     "configurationDefaults": {
@@ -24,30 +27,79 @@
         "[interactivestory]": {
           "textMateRules": [
             {
-              "scope": ["source.interactivestory support.function.interactivestory"],
+              "scope": [
+                "entity.name.tag.passage.interactivestory",
+                "source.interactivestory entity.name.tag.passage.interactivestory"
+              ],
               "settings": {
-                "foreground": "#1565c0"
+                "foreground": "#FFB74D",
+                "fontStyle": "bold"
               }
             },
             {
               "scope": [
-                "source.interactivestory markup.underline.link.interactivestory",
-                "source.interactivestory string.other.link.title.interactivestory",
-                "source.interactivestory punctuation.definition.link.interactivestory",
-                "source.interactivestory markup.underline.link.markdown",
-                "source.interactivestory string.other.link.title.markdown",
-                "source.interactivestory string.other.link.description.markdown",
-                "source.interactivestory string.other.link.description.title.markdown",
-                "source.interactivestory punctuation.definition.link.markdown",
-                "source.interactivestory punctuation.definition.link.description.begin.markdown",
-                "source.interactivestory punctuation.definition.link.description.end.markdown",
-                "source.interactivestory punctuation.definition.link.title.begin.markdown",
-                "source.interactivestory punctuation.definition.link.title.end.markdown",
-                "source.interactivestory meta.link.inline.markdown",
-                "source.interactivestory meta.link.inet.markdown"
+                "support.function.interactivestory",
+                "source.interactivestory support.function.interactivestory"
               ],
               "settings": {
-                "foreground": "#e65100"
+                "foreground": "#64B5F6"
+              }
+            },
+            {
+              "scope": [
+                "string.other.link.title.interactivestory",
+                "string.other.link.title.markdown",
+                "meta.link.inline.markdown"
+              ],
+              "settings": {
+                "foreground": "#FFFFFF"
+              }
+            },
+            {
+              "scope": [
+                "markup.underline.link.interactivestory",
+                "punctuation.definition.link.interactivestory",
+                "markup.underline.link.markdown"
+              ],
+              "settings": {
+                "foreground": "#FFB74D"
+              }
+            },
+            {
+              "scope": ["markup.bold.glitch.interactivestory"],
+              "settings": {
+                "foreground": "#EF5350",
+                "fontStyle": "italic"
+              }
+            },
+            {
+              "scope": ["variable.other.interactivestory"],
+              "settings": {
+                "foreground": "#81C784"
+              }
+            },
+            {
+              "scope": [
+                "keyword.operator.comparison.interactivestory",
+                "keyword.operator.logical.interactivestory"
+              ],
+              "settings": {
+                "foreground": "#C586C0"
+              }
+            },
+            {
+              "scope": ["constant.language.interactivestory"],
+              "settings": {
+                "foreground": "#D7BA7D"
+              }
+            },
+            {
+              "scope": [
+                "punctuation.section.embedded.begin.interactivestory",
+                "punctuation.section.embedded.end.interactivestory"
+              ],
+              "settings": {
+                "foreground": "#7EB6E8"
               }
             }
           ]

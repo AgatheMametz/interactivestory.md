@@ -1,5 +1,8 @@
 {
   "files.associations": {
     "**/*.it": "interactivestory"
+  },
+  "[interactivestory]": {
+    "editor.semanticHighlighting.enabled": false
   }
 }

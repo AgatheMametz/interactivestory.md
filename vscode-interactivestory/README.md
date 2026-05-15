@@ -53,3 +53,19 @@ Le dépôt contient `.vscode/settings.json` : les fichiers `**/*.it` utilisent l
 ## Modifier la grammaire
 
 Édite `syntaxes/interactivestory.tmLanguage.json`, régénère le `.vsix`, puis **Developer: Reload Window**.
+
+Marqueurs colorés : `(set:)`, `(if:)` / `(ifnot:)`, `(once)`, `(clear)`, `(goto:)`, `(wait:)`, `(fx:)`, `(reset_variables)`, `{{variable}}`, `$glitch$`.
+
+La coloration des fichiers `.it` dans Cursor repose sur des **décorations d’éditeur** (fiables quand `tokenColorCustomizations` ignore les scopes custom) :
+
+| Élément | Couleur |
+|--------|---------|
+| Titres de passage (colonne 0) | violet gras |
+| Mot-clé marqueur (`set:`, `if:`, `once`…) | bleu |
+| Parenthèses `( )` des marqueurs | bleu clair |
+| Nom de variable (`forcer_porte`, `{{x}}`) | vert |
+| Valeur / littéral (`true`, `3000`, `glitch`) | jaune |
+| Condition (`=`, `&`, `or`…) | mauve |
+| Libellé de lien `[…]` | orange |
+| Cible de lien `(…)` | orange doux |
+| Glitch `$texte$` | rouge italique |

@@ -29,7 +29,7 @@
     },
     {
       "match": "^(?!^--$)([^\\s\\t#][^\\n]*)$",
-      "name": "support.function.interactivestory"
+      "name": "entity.name.tag.passage.interactivestory"
     },
     {
       "match": "^\\s+$",
@@ -41,15 +41,42 @@
       "patterns": [
         { "include": "#story-set" },
         { "include": "#story-if-eq-binary" },
-        { "include": "#story-ifnotyet-link" },
+        { "include": "#story-if-link-binary" },
+        { "include": "#story-once-link" },
         { "include": "#story-if-binary" },
-        { "include": "#story-ifnotyet-binary" },
+        { "include": "#story-once-binary" },
         { "include": "#story-if-ternary" },
-        { "include": "#story-ifnotyet-keyword" },
+        { "include": "#story-once-keyword" },
+        { "include": "#story-wait" },
+        { "include": "#story-fx" },
         { "include": "#story-clear" },
         { "include": "#story-reset-variables" },
         { "include": "#story-goto" },
-        { "include": "#story-var-brace" }
+        { "include": "#story-glitch-span" },
+        { "include": "#story-var-brace" },
+        { "include": "#condition-expr" }
+      ]
+    },
+    "condition-expr": {
+      "patterns": [
+        {
+          "match": "\\s(&|\\|\\|)\\s|\\b(and|or)\\b",
+          "name": "keyword.operator.logical.interactivestory"
+        },
+        {
+          "match": "\\b(once)\\b",
+          "captures": {
+            "1": { "name": "support.function.interactivestory" }
+          }
+        },
+        {
+          "match": "([a-zA-Z_\\u00C0-\\u017F][a-zA-Z0-9_\\u00C0-\\u017F]*)\\s*(=|>=|<=|!=|<>|>|<)\\s*(\\S+)",
+          "captures": {
+            "1": { "name": "variable.other.interactivestory" },
+            "2": { "name": "keyword.operator.comparison.interactivestory" },
+            "3": { "name": "constant.language.interactivestory" }
+          }
+        }
       ]
     },
     "story-set": {
@@ -83,21 +110,36 @@
         "16": { "name": "punctuation.section.embedded.end.interactivestory" }
       }
     },
-    "story-ifnotyet-link": {
-      "match": "(?i)(\\()(ifnotyet)(\\))(\\s*)(\\()(\\[)([^\\]]*)(\\])(\\()([^)]*)(\\))(\\))",
+    "story-if-link-binary": {
+      "match": "(\\()((?:ifnot:|if:))(\\s*)([^)]+)(\\))(\\s*)(\\[)([^\\]]*)(\\])(\\()([^)]*)(\\))",
+      "captures": {
+        "1": { "name": "punctuation.section.embedded.begin.interactivestory" },
+        "2": { "name": "support.function.interactivestory" },
+        "3": { "name": "" },
+        "4": { "name": "meta.embedded.line.condition.interactivestory" },
+        "5": { "name": "punctuation.section.embedded.end.interactivestory" },
+        "6": { "name": "" },
+        "7": { "name": "punctuation.definition.link.interactivestory" },
+        "8": { "name": "string.other.link.title.interactivestory" },
+        "9": { "name": "punctuation.definition.link.interactivestory" },
+        "10": { "name": "punctuation.definition.link.interactivestory" },
+        "11": { "name": "markup.underline.link.interactivestory" },
+        "12": { "name": "punctuation.definition.link.interactivestory" }
+      }
+    },
+    "story-once-link": {
+      "match": "(?i)(\\()(once)(\\))(\\s*)(\\[)([^\\]]*)(\\])(\\()([^)]*)(\\))",
       "captures": {
         "1": { "name": "punctuation.section.embedded.begin.interactivestory" },
         "2": { "name": "support.function.interactivestory" },
         "3": { "name": "punctuation.section.embedded.end.interactivestory" },
         "4": { "name": "" },
-        "5": { "name": "punctuation.section.embedded.begin.interactivestory" },
-        "6": { "name": "punctuation.definition.link.interactivestory" },
-        "7": { "name": "string.other.link.title.interactivestory" },
+        "5": { "name": "punctuation.definition.link.interactivestory" },
+        "6": { "name": "string.other.link.title.interactivestory" },
+        "7": { "name": "punctuation.definition.link.interactivestory" },
         "8": { "name": "punctuation.definition.link.interactivestory" },
-        "9": { "name": "punctuation.definition.link.interactivestory" },
-        "10": { "name": "markup.underline.link.interactivestory" },
-        "11": { "name": "punctuation.definition.link.interactivestory" },
-        "12": { "name": "punctuation.section.embedded.end.interactivestory" }
+        "9": { "name": "markup.underline.link.interactivestory" },
+        "10": { "name": "punctuation.definition.link.interactivestory" }
       }
     },
     "story-if-binary": {
@@ -112,8 +154,8 @@
         "7": { "name": "" }
       }
     },
-    "story-ifnotyet-binary": {
-      "match": "(?i)(\\()(ifnotyet)(\\))(\\s*)(\\()",
+    "story-once-binary": {
+      "match": "(?i)(\\()(once)(\\))(\\s*)(\\()",
       "captures": {
         "1": { "name": "punctuation.section.embedded.begin.interactivestory" },
         "2": { "name": "support.function.interactivestory" },
@@ -132,10 +174,33 @@
         "5": { "name": "punctuation.section.embedded.end.interactivestory" }
       }
     },
-    "story-ifnotyet-keyword": {
-      "match": "(?i)(?<![(])\\b(ifnotyet)\\b(?!\\))",
+    "story-once-keyword": {
+      "match": "(?i)(?<![(])\\b(once)\\b(?!\\))",
       "captures": {
         "1": { "name": "support.function.interactivestory" }
+      }
+    },
+    "story-wait": {
+      "match": "(?i)(\\()(\\s*)(wait:)(\\s*)(\\d+)(\\s*)(\\))",
+      "captures": {
+        "1": { "name": "punctuation.section.embedded.begin.interactivestory" },
+        "2": { "name": "" },
+        "3": { "name": "support.function.interactivestory" },
+        "4": { "name": "" },
+        "5": { "name": "constant.numeric.interactivestory" },
+        "6": { "name": "" },
+        "7": { "name": "punctuation.section.embedded.end.interactivestory" }
+      }
+    },
+    "story-fx": {
+      "match": "(?i)(\\()(\\s*)(fx:)(\\s*)([^)]+)(\\))",
+      "captures": {
+        "1": { "name": "punctuation.section.embedded.begin.interactivestory" },
+        "2": { "name": "" },
+        "3": { "name": "support.function.interactivestory" },
+        "4": { "name": "" },
+        "5": { "name": "string.unquoted.interactivestory" },
+        "6": { "name": "punctuation.section.embedded.end.interactivestory" }
       }
     },
     "story-clear": {
@@ -170,8 +235,16 @@
         "7": { "name": "punctuation.section.embedded.end.interactivestory" }
       }
     },
+    "story-glitch-span": {
+      "match": "(\\$)([^$]+)(\\$)",
+      "captures": {
+        "1": { "name": "punctuation.definition.glitch.begin.interactivestory" },
+        "2": { "name": "markup.bold.glitch.interactivestory" },
+        "3": { "name": "punctuation.definition.glitch.end.interactivestory" }
+      }
+    },
     "story-var-brace": {
-      "match": "(\\{\\{)(\\w+)(\\}\\})",
+      "match": "(\\{\\{)([\\p{L}_][\\p{L}\\p{N}_]*)(\\}\\})",
       "captures": {
         "1": { "name": "punctuation.definition.template.begin.interactivestory" },
         "2": { "name": "variable.other.interactivestory" },
