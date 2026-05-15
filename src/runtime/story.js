@@ -3,7 +3,7 @@
   const dataEl = document.getElementById("story-data");
   if (!dataEl) return;
   const STORY = JSON.parse(dataEl.textContent);
-  const { meta, nodes } = STORY;
+  const { meta, nodes, order: storyOrder } = STORY;
 
   const STORAGE_SAVE_VERSION = 1;
   const STORAGE_PREFIX = "interactivestory_v1_";
@@ -420,7 +420,7 @@
       const raw = getComputedStyle(document.documentElement)
         .getPropertyValue("--story-page-glitch-duration")
         .trim();
-      if (!raw) return 500;
+      if (!raw) return 100;
       const mMs = /^([\d.]+)\s*ms$/i.exec(raw);
       if (mMs) {
         const n = Number(mMs[1]);
@@ -708,6 +708,16 @@
     return null;
   }
 
+  function isGotoMarkerBlock(s) {
+    return /^\(\s*goto:\s*[\p{L}_][\p{L}\p{N}_]*\s*\)$/iu.test(s.trim());
+  }
+
+  /** Bloc binaire `(if:…)(…)` : garder les `()` seulement pour `(set:)` / `(goto:)`. */
+  function binaryIfInnerForProcess(inner, fullBlock) {
+    if (/^set:/i.test(inner) || /^goto:/i.test(inner)) return fullBlock;
+    return inner;
+  }
+
   function replaceConditionalMarkers(s, depth, ctx) {
     let out = s;
     let pos = 0;
@@ -748,8 +758,9 @@
             continue;
           }
           replaceEnd = blk2.end;
-          innerRaw = blk2.inner.trim();
-          if (/^once$/i.test(innerRaw)) {
+          const inner = blk2.inner.trim();
+          const fullBlock = out.slice(k, blk2.end + 1);
+          if (/^once$/i.test(inner)) {
             let k3 = replaceEnd + 1;
             while (k3 < out.length && /\s/.test(out[k3])) k3++;
             if (out[k3] === "(") {
@@ -765,6 +776,8 @@
                 replaceEnd = k3 + linkM[0].length - 1;
               }
             }
+          } else {
+            innerRaw = binaryIfInnerForProcess(inner, fullBlock);
           }
         } else {
           const linkM = /^\[([^\]]*)\]\(([^)]+)\)/.exec(out.slice(k));
@@ -789,6 +802,10 @@
             replacement = ensureStoryLinkIfBareNodeId(
               processMarkers(innerRaw, depth + 1, ctx),
             );
+          }
+          if (pendingGoto && isGotoMarkerBlock(innerRaw)) {
+            out = out.slice(0, openIdx) + replacement;
+            return out;
           }
         }
       } else {
@@ -819,14 +836,8 @@
   function processMarkers(md, depth = 0, ctx = {}) {
     if (depth > 12) return md;
     let out = md;
-    const setRe = /\(set:\s*([^)]+)\)/g;
-    let m;
-    const sets = [];
-    while ((m = setRe.exec(md)) !== null) sets.push({ raw: m[0], inner: m[1] });
-    for (const st of sets) {
-      applySet(st.inner);
-      out = out.split(st.raw).join("");
-    }
+
+    out = replaceConditionalMarkers(out, depth, ctx);
 
     out = out.replace(/\(\s*reset_variables\s*\)/gi, () => {
       resetAllVariables();
@@ -849,7 +860,16 @@
       );
     }
 
-    out = replaceConditionalMarkers(out, depth, ctx);
+    if (!ctx.skipSet) {
+      const setRe = /\(set:\s*([^)]+)\)/g;
+      let m;
+      const sets = [];
+      while ((m = setRe.exec(out)) !== null) sets.push({ raw: m[0], inner: m[1] });
+      for (const st of sets) {
+        applySet(st.inner);
+        out = out.split(st.raw).join("");
+      }
+    }
     out = applyRemoveLinkMarkers(out);
     out = expandVars(out);
     if (!ctx.skipFx) out = applyFxMarkers(out);
@@ -862,7 +882,28 @@
     } else {
       out = out.replace(/\(\s*clear\s*\)/gi, "");
     }
+    if (ctx.skipSet) {
+      const setRe = /\(set:\s*([^)]+)\)/g;
+      let m;
+      while ((m = setRe.exec(out)) !== null) {
+        if (!ctx.deferredSets) ctx.deferredSets = [];
+        ctx.deferredSets.push(m[1]);
+      }
+      out = out.replace(/\(set:\s*[^)]+\)/g, "").trim();
+    }
     return out;
+  }
+
+  function applyOptionSetsFromAnchor(a) {
+    const raw = a.dataset.optionSets;
+    if (!raw) return;
+    try {
+      const inners = JSON.parse(raw);
+      if (!Array.isArray(inners)) return;
+      for (const inner of inners) applySet(inner);
+    } catch {
+      /* ignore */
+    }
   }
 
   /** Découpe le corps en alternance `md` / `wait` pour tous les `(wait: ms)` (plusieurs par passage). */
@@ -946,30 +987,131 @@
     },
   });
 
-  function formatVarValue(v) {
-    if (v === true || v === false) return String(v);
-    if (typeof v === "number" && Number.isFinite(v)) return String(v);
-    if (typeof v === "string") return JSON.stringify(v);
-    if (v == null) return String(v);
-    try {
-      return JSON.stringify(v);
-    } catch {
-      return String(v);
+  function noteVarFromConditionAtom(atom, names) {
+    const e = atom.trim();
+    if (!e || /^once$/i.test(e)) return;
+    const cmp = /^([\p{L}_][\p{L}\p{N}_]*)\s*(>=|<=|!=|<>|>|<)\s*/u.exec(e);
+    if (cmp) {
+      names.add(cmp[1]);
+      return;
     }
+    const eq = /^([\p{L}_][\p{L}\p{N}_]*)\s*=\s*/u.exec(e);
+    if (eq) {
+      names.add(eq[1]);
+      return;
+    }
+    const shorthand = /^([\p{L}_][\p{L}\p{N}_]*)\s+\S/u.exec(e);
+    if (shorthand) {
+      names.add(shorthand[1]);
+      return;
+    }
+    const idOnly = /^([\p{L}_][\p{L}\p{N}_]*)$/u.exec(e);
+    if (idOnly) names.add(idOnly[1]);
+  }
+
+  function noteVarsFromConditionExpr(expr, names) {
+    const e = expr.trim();
+    if (!e) return;
+    const orParts = splitLogical(e, "or");
+    if (orParts.length > 1) {
+      for (const part of orParts) {
+        const andParts = splitLogical(part, "and");
+        if (andParts.length > 1) {
+          for (const atom of andParts) noteVarFromConditionAtom(atom, names);
+        } else {
+          noteVarFromConditionAtom(part, names);
+        }
+      }
+      return;
+    }
+    const andParts = splitLogical(e, "and");
+    if (andParts.length > 1) {
+      for (const atom of andParts) noteVarFromConditionAtom(atom, names);
+    } else {
+      noteVarFromConditionAtom(e, names);
+    }
+  }
+
+  function noteVarsFromIfConditionBody(body, names) {
+    const ternary = splitThreeBySemicolons(body);
+    if (ternary) noteVarsFromConditionExpr(ternary[0], names);
+    else noteVarsFromConditionExpr(body, names);
+  }
+
+  function scanTextForVarNames(text, names) {
+    for (const m of text.matchAll(/\{\{([\p{L}_][\p{L}\p{N}_]*)\}\}/gu)) {
+      names.add(m[1]);
+    }
+    for (const m of text.matchAll(/\(set:\s*([\p{L}_][\p{L}\p{N}_]*)/giu)) {
+      names.add(m[1]);
+    }
+    let pos = 0;
+    let guard = 0;
+    while (guard++ < 5000) {
+      const iNot = text.indexOf("(ifnot:", pos);
+      const iIf = text.indexOf("(if:", pos);
+      if (iNot === -1 && iIf === -1) break;
+      const useNot = iNot !== -1 && (iIf === -1 || iNot < iIf);
+      const openIdx = useNot ? iNot : iIf;
+      const blk = consumeParenBlock(text, openIdx);
+      if (!blk) {
+        pos = openIdx + 1;
+        continue;
+      }
+      const parsed = parseIfInner(blk.inner);
+      if (parsed) noteVarsFromIfConditionBody(parsed.body, names);
+      pos = blk.end + 1;
+    }
+  }
+
+  function collectStoryVarNames() {
+    const names = new Set();
+    for (const node of Object.values(nodes)) {
+      const chunks = [node.bodyMd, ...(node.optionLines || [])];
+      for (const text of chunks) {
+        if (text) scanTextForVarNames(text, names);
+      }
+    }
+    return [...names].sort((a, b) => a.localeCompare(b, "fr"));
+  }
+
+  const storyVarNames = collectStoryVarNames();
+
+  function varValueForInput(v) {
+    if (typeof v === "string") return JSON.stringify(v);
+    return String(v);
+  }
+
+  function applyVarFromPanel(name, raw) {
+    const t = raw.trim();
+    if (t === "") delete vars[name];
+    else vars[name] = parseLiteral(t);
+  }
+
+  function refreshStoryAfterVarEdit() {
+    const curId = nodeHistory[nodeHistory.length - 1];
+    const node = curId ? nodes[curId] : null;
+    renderVars();
+    if (node) renderOptions(node, 0);
+    if (!restorePass) persistState();
   }
 
   function renderVars() {
     if (!varsPanel) return;
-    const keys = Object.keys(vars).sort();
+    const keys = [
+      ...new Set([...storyVarNames, ...Object.keys(vars)]),
+    ].sort((a, b) => a.localeCompare(b, "fr"));
     if (keys.length === 0) {
       varsPanel.innerHTML = "<p><em>Aucune variable</em></p>";
       return;
     }
     const rows = keys
-      .map(
-        (k) =>
-          `<tr><td><code>${escapeHtml(k)}</code></td><td>${escapeHtml(formatVarValue(vars[k]))}</td></tr>`,
-      )
+      .map((k) => {
+        const defined = Object.prototype.hasOwnProperty.call(vars, k);
+        const inputVal = defined ? varValueForInput(vars[k]) : "";
+        const placeholder = defined ? "" : "non défini";
+        return `<tr><td><code>${escapeHtml(k)}</code></td><td><input type="text" class="var-edit" data-var-name="${escapeAttr(k)}" value="${escapeAttr(inputVal)}" placeholder="${escapeAttr(placeholder)}" aria-label="${escapeAttr(k)}"></td></tr>`;
+      })
       .join("");
     varsPanel.innerHTML = `<table><thead><tr><th scope="col">Nom</th><th scope="col">Valeur</th></tr></thead><tbody>${rows}</tbody></table>`;
   }
@@ -1020,19 +1162,25 @@
         ? stripped.pageFx
         : null;
     const fxInvert = stripped.fxInvert;
-    const processed = processMarkers(s, 0, {
+    const optCtx = {
       skipClear: true,
       skipFx: true,
       skipGoto: true,
-    });
+      skipSet: true,
+      deferredSets: [],
+    };
+    const processed = processMarkers(s, 0, optCtx);
+    if (/\(if(?:not)?:/i.test(processed)) return null;
     const lm = /\[([^\]]*)\]\(([^)]+)\)/.exec(processed.trim());
     if (!lm) return null;
+    const sets = optCtx.deferredSets?.length ? optCtx.deferredSets : null;
     return {
       label: lm[1].trim(),
       target: lm[2].trim(),
       once,
       pageFx,
       fxInvert,
+      sets,
     };
   }
 
@@ -1093,6 +1241,7 @@
       if (opt.pageFx) a.dataset.pageFx = opt.pageFx;
       if (opt.fxInvert === true) a.dataset.fxInvert = "1";
       else if (opt.fxInvert === false) a.dataset.fxInvert = "0";
+      if (opt.sets) a.dataset.optionSets = JSON.stringify(opt.sets);
       if (opt.label.includes("<")) a.innerHTML = opt.label;
       else a.textContent = opt.label;
       li.appendChild(a);
@@ -1116,7 +1265,11 @@
     pendingChronicleClear = false;
     pendingGoto = null;
 
-    const segments = extractWaitTimelineSegments(node.bodyMd);
+    const markerProcessed = processMarkers(node.bodyMd);
+    syncPendingPageFxInvert();
+    syncPendingPageGlitch();
+
+    const segments = extractWaitTimelineSegments(markerProcessed);
     const timelineActive =
       !restorePass &&
       !alreadyVisited &&
@@ -1130,11 +1283,22 @@
       if (chronicle) chronicle.scrollTop = chronicle.scrollHeight;
     };
 
+    if (pendingGoto) {
+      flushChronicleClearIfNeeded();
+      const displayMd = bodyHasWaitMarkers(node.bodyMd)
+        ? stripWaitMarkersFromBody(markerProcessed)
+        : markerProcessed;
+      if (displayMd.trim()) {
+        appendStoryArticle(nodeId, displayMd, alreadyVisited || restorePass);
+      }
+      finishNodeUi(0, !restorePass);
+      if (flushPendingGoto()) return;
+    }
+
     if (!timelineActive) {
-      const rawBody = bodyHasWaitMarkers(node.bodyMd)
-        ? stripWaitMarkersFromBody(node.bodyMd)
-        : node.bodyMd;
-      const processed = processBodySliceAndSync(rawBody);
+      const processed = bodyHasWaitMarkers(node.bodyMd)
+        ? stripWaitMarkersFromBody(markerProcessed)
+        : markerProcessed;
       flushChronicleClearIfNeeded();
       const contentDoneMs = appendStoryArticle(
         nodeId,
@@ -1158,16 +1322,14 @@
 
     function runFrom(segIdx) {
       nodeWaitTimerId = 0;
-      pendingChronicleClear = false;
       let i = segIdx;
       while (i < segments.length) {
         const seg = segments[i];
         i += 1;
         if (seg.kind === "md") {
-          const processed = processBodySliceAndSync(seg.text);
           flushChronicleClearIfNeeded();
-          if (processed.trim()) {
-            lastContentDoneMs = appendStoryArticle(nodeId, processed, false);
+          if (seg.text.trim()) {
+            lastContentDoneMs = appendStoryArticle(nodeId, seg.text, false);
           }
           renderVars();
           if (pendingGoto) {
@@ -1190,10 +1352,22 @@
     runFrom(0);
   }
 
-  function goToNode(nodeId) {
+  function goToNode(nodeId, opts = {}) {
     if (!nodes[nodeId]) return;
+    if (opts.clear) {
+      if (nodeWaitTimerId) {
+        clearTimeout(nodeWaitTimerId);
+        nodeWaitTimerId = 0;
+      }
+      teardownPageGlitchBurst();
+      if (chronicle) chronicle.replaceChildren();
+      if (optionsNav) optionsNav.innerHTML = "";
+      nodeHistory.length = 0;
+      window.scrollTo(0, 0);
+    }
     appendNodeBlock(nodeId);
-    chronicle.scrollTop = chronicle.scrollHeight;
+    if (chronicle) chronicle.scrollTop = chronicle.scrollHeight;
+    if (opts.clear && !restorePass) persistState();
   }
 
   let optionPageGlitchBusy = false;
@@ -1206,17 +1380,15 @@
     const id = a.dataset.node;
     if (!id) return;
     if (a.dataset.removelink === "1") unwrapStoryGotoLink(a);
-    if (optionsNav && optionsNav.contains(a)) {
+    const isOption = optionsNav && optionsNav.contains(a);
+    if (isOption) applyOptionSetsFromAnchor(a);
+    if (isOption) {
       const inv = a.dataset.fxInvert;
       if (inv === "1") applyStoryRootFxInvertFlag(true);
       else if (inv === "0") applyStoryRootFxInvertFlag(false);
     }
     const fx = a.dataset.pageFx;
-    if (
-      optionsNav &&
-      optionsNav.contains(a) &&
-      (fx === "on" || fx === "strong")
-    ) {
+    if (isOption && (fx === "on" || fx === "strong")) {
       if (optionPageGlitchBusy) return;
       optionPageGlitchBusy = true;
       a.setAttribute("aria-busy", "true");
@@ -1277,9 +1449,25 @@
     });
   }
 
+  if (varsPanel) {
+    varsPanel.addEventListener("change", (ev) => {
+      const input = ev.target.closest("input.var-edit[data-var-name]");
+      if (!input) return;
+      applyVarFromPanel(input.dataset.varName, input.value);
+      refreshStoryAfterVarEdit();
+    });
+  }
+
   const jumpSelect = document.getElementById("story-jump");
   if (jumpSelect) {
-    for (const id of Object.keys(nodes).sort((a, b) => a.localeCompare(b, "fr"))) {
+    const jumpIds =
+      Array.isArray(storyOrder) && storyOrder.length
+        ? [
+            ...storyOrder.filter((id) => Object.prototype.hasOwnProperty.call(nodes, id)),
+            ...Object.keys(nodes).filter((id) => !storyOrder.includes(id)),
+          ]
+        : Object.keys(nodes);
+    for (const id of jumpIds) {
       const opt = document.createElement("option");
       opt.value = id;
       opt.textContent = id;
@@ -1288,7 +1476,7 @@
     jumpSelect.addEventListener("change", () => {
       const id = jumpSelect.value;
       if (!id) return;
-      goToNode(id);
+      goToNode(id, { clear: true });
       jumpSelect.selectedIndex = 0;
     });
   }

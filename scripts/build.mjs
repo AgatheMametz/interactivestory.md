@@ -46,6 +46,7 @@ export function buildStory(mdPath) {
   const storyJson = JSON.stringify({
     meta: story.meta,
     nodes: story.nodes,
+    order: story.order,
   });
 
   // Remplacer par une fonction : sinon `$` dans le contenu (ex. `` `$x$` `` dans story.js)

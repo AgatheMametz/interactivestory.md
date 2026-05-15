@@ -265,6 +265,11 @@ réfléchir_à_un_plan
 prendre_relique
     (clear)
 
+    (set: souvenir_elphee true)
+    (set: souvenir_compagnons true)
+    (set: souvenir_guerre true)
+    (set: souvenir_reine true)
+
     (fx: invert true)
 
     # Lorsque vous touchez la relique, une énergie étrangère vous traverse.
@@ -388,6 +393,8 @@ oublier_elphee_relique
 scintiller
     Tout ce que vous savez, (if: souvenir_actuel = reine)(c'est qu'Elphée a besoin de vous. Que vos compagnons d'armes méritent vengeance. Et surtout, que vous savez vous battre.)(if: souvenir_actuel = compagnons)(c'est qu'Elphée a besoin de vous. Que votre royaume est en péril. Et surtout, que vous savez vous battre.)(if: souvenir_actuel = elphee)(c'est que votre royaume est en péril. Que vos compagnons d'armes méritent vengeance. Et surtout, que vous savez vous battre.)
 
+    (if: souvenir_compagnons = false)(Vous êtes, après tout, le seul et unique héros du Royaume des Asterales.)
+
     (wait: 3000)
     
     Les trois gardes se retournent. Ils braquent leurs lances sur vous. D'un instant à l'autre, l'une d'elles traversera votre poitrine.
@@ -430,12 +437,13 @@ se_liberer
         (if: nbr_gardes = 3)([Attaquer](attaquer_garde))
         (if: nbr_gardes = 2)([Tuer le deuxième garde](attaquer_garde_deuxième_garde))
         (if: nbr_gardes = 1)([Tuer le dernier garde](tuer_dernier_garde))
-        (if: libre = true)([Se mettre à courrir](se_mettre_à_courrir))
+        (if: libre = true)([S'enfuir](se_mettre_à_courrir))
 
 attaquer_garde
-    Même affaibli (ifnot: libre = false)(et enchaîné) vous parvenez à vous glisser au corps à corps avec le garde maladroit. D'un geste mécanique, vous lui tranchez la gorge. 
+    Même affaibli (ifnot: libre = false)(et enchaîné) vous parvenez à esquiver le coup de lance de ce garde maladroit. D'un geste mécanique, vous lui tranchez la gorge. 
 
-    Vous venez de tuer un homme, mais cela ne vous fait rien. Vous avez arrêté de compter les morts il y a bien longtemps.
+    (if: souvenir_guerre = true)(Vous venez de tuer un homme, mais cela ne vous fait rien. Vous avez arrêté de compter les morts il y a bien longtemps.)
+    (if: souvenir_guerre = false)(Vous venez de tuer un homme. C'est la première fois. Est-ce la première fois ? Vous ne vous souvenez plus. Vous avez agis par automatisme.)
 
     (set: nbr_gardes--)
 
@@ -445,16 +453,15 @@ attaquer_garde
 
         (once)([Tuer un deuxième garde](attaquer_garde_deuxième_garde))
         (once)([Se libérer](se_liberer))
-        (if: libre = true)([Se mettre à courrir](se_mettre_à_courrir))
+        (if: libre = true)([S'enfuir](se_mettre_à_courrir))
 
 attaquer_garde_deuxième_garde
-    D'un mouvement rapide, vous passez d'un garde à l'autre.
-    
-    (ifnot: libre = false)( Vos chaînes vous empêchent de vous enfuir, mais si un corps est à portée de votre arme, alors c'est une cible. )
+    (ifnot: libre = false)(Toujours enchainé, d'un mouvement rapide, vous passez d'un garde à l'autre.)
+    (ifnot: libre = true)(D'un mouvement rapide, vous passez d'un garde à l'autre.)
 
     Le garde esssaye de reculer, mais sa lance est trop longue. Il trébuche et tombe sur le sol.
 
-        [Tuer le deuxième garde](tuer_deuxième_garde)
+        [Le tuer](tuer_deuxième_garde)
         (once)([Se libérer](se_liberer))
 
 tuer_deuxième_garde
@@ -465,27 +472,31 @@ tuer_deuxième_garde
     (wait: 3000)
 
     Encore à terre, vous tournez votre regard vers le dernier garde. Il s'agit d'un jeune homme, sans expérience. 
+
+    Vous lisez dans ses yeux une tristesse.
+    
+    Il s'écroule de lui-même avec un visage figé dans cette expression qui ressemble à une grimace. 
     
     "AAAH !"
 
         (if: nbr_gardes = 1)([Tuer le dernier garde](tuer_dernier_garde))
         (once)([Se libérer](se_liberer))
-        (if: libre = true)([Se mettre à courrir](se_mettre_à_courrir))
+        (if: libre = true)([S'enfuir](se_mettre_à_courrir))
 
 tuer_dernier_garde
-    Avant d'enfoncer votre arme dans l'oeil du jeune homme, vous lisez dans ses yeux une tristesse.
-    
-    Il s'écroule avec un visage figé dans cette expression qui ressemble à une grimace. Ce visage vous hantera.
+    Vous enfoncez votre dague dans l'oeil du jeune garde sans y prêter attention. Il était, de toute façon, déjà mort de peur.
 
     (set: nbr_gardes--)
 
     Les trois gardes sont morts.
 
         (once)([Se libérer](se_liberer))
-        (if: libre = true)([Se mettre à courrir](se_mettre_à_courrir))
+        (if: libre = true)([S'enfuir](se_mettre_à_courrir))
 
-se_mettre_à_courrir_sans_garde
+se_mettre_à_courrir
     (clear)
+    (if: nbr_gardes > 0)(set: souvenir_regard_jeune_garde true)
+    (if: nbr_gardes = 0)(set: souvenir_regard_jeune_garde false)
     Alors que vous courrez dans les couloirs du château, (if: souvenir_actuel = reine)(vous sentez que la lame de la dague perd sa chaleur.)(if: souvenir_actuel = elphee)(vous sentez que les flammes de la dague s'éteignent.)(if: souvenir_actuel = compagnons)(vous sentez que l'acide de la dague s'évapore.).
 
     Libre, votre objectif est de rejoindre la salle du trône le plus vite possible.
@@ -499,23 +510,129 @@ se_mettre_à_courrir_sans_garde
     (goto: porte_fermée)
 
 porte_fermée
-    Vous êtes devant la grande porte qui mène à la salle du trône. Elle est fermée.
+    (set: 0 0)
 
         (once)([Ouvrir](tenter_d_ouvrir_la_porte))
         (once)([Écouter à la porte](écouter_à_la_porte))
-        (if: forcer_porte = true & once)([Forcer la porte](forcer_la_porte))
-        (once)([$Appeler le pouvoir de la dague$](appeler_le_pouvoir_de_la_dague))(fx: glitch)
+        (if: try_forcer_porte = true & once)([Forcer la porte](forcer_la_porte))
+        (if: failed_forcer_porte = true & once)([$Appeler le pouvoir de la dague$](appeler_le_pouvoir_de_la_dague))(fx: glitch)
 
 tenter_d_ouvrir_la_porte
     Vous essayez d'ouvrir la porte, mais elle est fermée
 
-    (set: forcer_porte true)
+    (set: try_forcer_porte true)
 
     (goto: porte_fermée)
 
 forcer_la_porte
-    Vous essayez de forcer la porte, mais elle est trop solide.
+    De toute votre poids de protecteur, vous assenez des coups de bélier à l'aise de votre épaule.
+    
+    Malgré tous vos efforts, elle est trop solide.
 
-    (set: forcer_porte false)
+    Desesperé, vous tombez à genoux. Votre regard se porte sur la dague qui vous a sauvé la vie.
+
+    (set: failed_forcer_porte true)
 
     (goto: porte_fermée)
+
+écouter_à_la_porte
+    Vous écoutez à la porte. Vous n'entendez rien. Est-ce que vous arrivez trop tard ?
+
+    (goto: porte_fermée)
+
+appeler_le_pouvoir_de_la_dague
+    (clear)
+    (fx: invert true)
+    Vous appellez le pouvoir de la dague.
+
+    (wait: 3000)
+
+    *Porteur, te voici devant un nouvel obstacle.*
+    *À nouveau pour toi je peux créer un miracle*
+
+    (wait: 3000)
+
+    *Un souvenir contre ma magie démesurée,*
+    *J'en ferai un bon usage, sois-en assuré.*
+
+    (wait: 3000)
+
+    *Choisis bien ce que tu laisses derrière toi,*
+    *Mon pouvoir te couronnera Roi*
+    
+    (wait: 5000)
+
+    Quel souvenir cédez-vous ?
+
+        (ifnot: souvenir_guerre = false)[Oublier la guerre](porte_avec_pouvoir_de_la_dague)(fx: glitch)(set: souvenir_actuel guerre)
+        (ifnot: souvenir_reine = false)[Oublier la Reine](porte_avec_pouvoir_de_la_dague)(fx: glitch)(set: souvenir_actuel reine)
+        (ifnot: souvenir_compagnons = false)[Oublier vos compagnons d'armes](porte_avec_pouvoir_de_la_dague)(fx: glitch)(set: souvenir_actuel compagnons)
+        (ifnot: souvenir_elphee = false)[Oublier Elphée](porte_avec_pouvoir_de_la_dague)(fx: glitch)(set: souvenir_actuel elphee)
+        (ifnot: souvenir_regard_jeune_garde = false)[Oublier le regard d'effroi de ce jeune garde](porte_avec_pouvoir_de_la_dague)(fx: glitch)(set: souvenir_actuel regard_jeune_garde)
+
+porte_avec_pouvoir_de_la_dague
+    (clear)
+    (fx: invert false)
+
+    Vous avez offert un souvenir à la dague, vous ne savez déjà plus lequel.
+
+    (if: souvenir_elphee = false & souvenir_reine = false)(goto: porte_sans_souvenir)
+
+    (if: souvenir_actuel = guerre)(
+    Partout autour de vous, les objets semblent saigner. Des filets de sang coulent sur les murs, les sols, les meubles.
+
+    L'énorme porte de fer passe au rouge. Elle est grignotée par ce sang magique.
+    )
+
+    (if: souvenir_actuel = reine)(
+    Partout autour de vous, les objets semblent se dissoudre. Des filets d'acide coulent sur les murs, les sols, les meubles.
+
+    L'énorme porte de fer se met à rouiller.
+    )
+
+    (if: souvenir_actuel = compagnons)(
+    Partout autour de vous, les objets se mettent à briller. La pièce devient bouillante. Les vases en verre et le lustre en cristal se liquéfient.
+
+    L'énorme porte en fer se déforme sous l'effet de la chaleur.
+    )
+
+    (if: souvenir_actuel = elphee)(
+    Partout autour de vous, les objets prennent feu. Les rideaux en soie se consument, et le grand tapis rouge roussis.
+
+    L'énorme porte en fer se déforme sous l'effet de la chaleur.
+    )
+
+    (if: souvenir_actuel = regard_jeune_garde)(
+    Partout autour de vous, tout se met à trembler. Le lustre en cristal fait un vacarme et tombe en morceaux. De la poussière tombe par kilo du plafond.
+
+    Les gonds de l'énorme porte en fer lâchent.
+    )
+
+        [Mettre un grand coup dans la porte](mettre_un_grand_coup_dans_la_porte)
+        [Appeler un autre miracle](appeler_un_autre_miracle)
+
+
+porte_sans_souvenir
+    Vous êtes devant une grande porte en fer. Il s'agit de la porte de la salle du trône.
+
+    (wait: 3000)
+
+    ...
+
+    (wait: 3000)
+
+        Que faites-vous là ?
+
+        [Essayer de se souvenir](souvenir_porte)
+
+souvenir_porte
+    Vous essayez de vous souvenir de la porte. Mais vous ne vous souvenez de rien.
+
+
+mettre_un_grand_coup_dans_la_porte
+    
+    Avec l'énergie du désespoir, vous mettez un grand coup dans la porte, qui se fracasse sur le sol.
+
+    [Vous entrez dans la salle du trône.](salle_du_trone)(removelink)
+
+salle_du_trone

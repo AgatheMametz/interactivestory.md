@@ -11,7 +11,7 @@
         /* Fond derrière les tranches du glitch (comme le #050814 du CodePen) ; surcharger dans _css si besoin */
         --text-glitch-slice-bg: Canvas;
         /* Glitch plein écran `(fx: glitch)` — surcharger dans _css (ex. `1s`) si besoin */
-        --story-page-glitch-duration: 0.5s;
+        --story-page-glitch-duration: 0.2s;
       }
       body {
         margin: 0;
@@ -340,6 +340,19 @@
       #vars-panel code,
       #about-panel code {
         font-size: 0.85em;
+      }
+      #vars-panel input.var-edit {
+        width: 100%;
+        max-width: 16rem;
+        font: inherit;
+        padding: 0.15rem 0.35rem;
+        border: 1px solid #ccc;
+        border-radius: 2px;
+        box-sizing: border-box;
+      }
+      #vars-panel input.var-edit::placeholder {
+        font-style: italic;
+        color: #888;
       }
 
       /* $…$ → .text-glitch (adapté de https://codepen.io/Kathleen-Garrity/pen/PwGwGKR — 404 glitch, calques + pauses) */
