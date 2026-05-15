@@ -21,8 +21,11 @@
 
   /** Mis à `true` si `processMarkers` retire un `(clear)` du texte courant. */
   let pendingChronicleClear = false;
+  /** Timer chaîné pour les `(wait: N)` entre morceaux d’un même passage. */
+  let nodeWaitTimerId = 0;
 
   const chronicle = document.getElementById("chronicle");
+  const storyRoot = document.getElementById("story-root");
   const optionsNav = document.getElementById("options");
   const aboutPanel = document.getElementById("about-panel");
   const varsPanel = document.getElementById("vars-panel");
@@ -75,8 +78,22 @@
     return escapeHtml(s).replace(/'/g, "&#39;");
   }
 
+  /** Invalide la sauvegarde si un passage (corps ou options) change — évite de rejouer sans `(wait:)` après édition. */
+  function storyNodesContentHash() {
+    let h = 2166136261 >>> 0;
+    for (const id of Object.keys(nodes).sort()) {
+      const n = nodes[id];
+      const blob = `${id}\0${n?.bodyMd ?? ""}\0${(n?.optionLines ?? []).join("\n")}`;
+      for (let i = 0; i < blob.length; i++) {
+        h ^= blob.charCodeAt(i);
+        h = Math.imul(h, 16777619) >>> 0;
+      }
+    }
+    return h.toString(16);
+  }
+
   function computeFingerprint() {
-    return `${meta.start}|${String(meta.version ?? "")}|${Object.keys(nodes).length}`;
+    return `${meta.start}|${String(meta.version ?? "")}|${Object.keys(nodes).length}|${storyNodesContentHash()}`;
   }
 
   function getStorageKey() {
@@ -152,6 +169,16 @@
   }
 
   function wipeRuntimeDomAndState() {
+    teardownPageGlitchBurst();
+    if (nodeWaitTimerId) {
+      clearTimeout(nodeWaitTimerId);
+      nodeWaitTimerId = 0;
+    }
+    if (storyRoot) {
+      storyRoot.style.removeProperty("--fx-page-invert");
+      storyRoot.style.removeProperty("--fx-page-hue-extra");
+      storyRoot.classList.remove("story-root--fx-invert-live");
+    }
     if (chronicle) chronicle.replaceChildren();
     if (optionsNav) optionsNav.innerHTML = "";
     visited.clear();
@@ -235,6 +262,244 @@
       if (v === undefined || v === null) return "";
       return String(v);
     });
+  }
+
+  /**
+   * Effets page : (fx: glitch)… ; (fx: invert true) / (fx: invert false) pilotent invert + hue 180 pendant le glitch.
+   * Sur une option, (fx: invert …) s’applique au clic (avant le glitch si présent).
+   */
+  let pendingPageGlitch = null;
+  let pendingPageFxInvert = null;
+  let pageGlitchEndTimerId = 0;
+  /** Sauvegarde de `html.style.backgroundColor` avant d’aligner sur le fond du body pendant le glitch. */
+  let pageGlitchHtmlBgBackup = null;
+
+  function snapshotGlitchPageBackdrop() {
+    const body = document.body;
+    if (!body) return;
+    const bc = getComputedStyle(body).backgroundColor;
+    const transparent =
+      !bc ||
+      bc === "rgba(0, 0, 0, 0)" ||
+      bc === "transparent" ||
+      /^rgba\(\s*0\s*,\s*0\s*,\s*0\s*,\s*0\s*\)$/i.test(bc.trim());
+    if (transparent) {
+      document.documentElement.style.removeProperty("--story-page-glitch-backdrop");
+      return;
+    }
+    document.documentElement.style.setProperty("--story-page-glitch-backdrop", bc);
+    if (pageGlitchHtmlBgBackup === null) {
+      pageGlitchHtmlBgBackup = document.documentElement.style.backgroundColor;
+      document.documentElement.style.backgroundColor = bc;
+    }
+  }
+
+  function clearGlitchPageBackdrop() {
+    document.documentElement.style.removeProperty("--story-page-glitch-backdrop");
+    if (pageGlitchHtmlBgBackup !== null) {
+      document.documentElement.style.backgroundColor = pageGlitchHtmlBgBackup;
+      pageGlitchHtmlBgBackup = null;
+    }
+  }
+
+  function teardownPageGlitchBurst() {
+    cancelPageGlitchEndScheduling();
+    if (storyRoot) {
+      storyRoot.classList.remove(
+        "story-root--page-glitch",
+        "story-root--page-glitch-strong",
+      );
+    }
+    clearGlitchPageBackdrop();
+  }
+
+  function cancelPageGlitchEndScheduling() {
+    if (storyRoot) {
+      storyRoot.removeEventListener("animationend", onStoryPageGlitchAnimationEnd);
+    }
+    if (pageGlitchEndTimerId) {
+      clearTimeout(pageGlitchEndTimerId);
+      pageGlitchEndTimerId = 0;
+    }
+  }
+
+  function onStoryPageGlitchAnimationEnd(ev) {
+    if (!storyRoot || ev.target !== storyRoot) return;
+    if (ev.animationName !== "story-page-glitch-main") return;
+    if (ev.pseudoElement) return;
+    teardownPageGlitchBurst();
+  }
+
+  /** Durée en ms de `--story-page-glitch-duration` sur `:root` (fallback 500). */
+  function readPageGlitchDurationMs() {
+    try {
+      const raw = getComputedStyle(document.documentElement)
+        .getPropertyValue("--story-page-glitch-duration")
+        .trim();
+      if (!raw) return 500;
+      const mMs = /^([\d.]+)\s*ms$/i.exec(raw);
+      if (mMs) {
+        const n = Number(mMs[1]);
+        return Number.isFinite(n) ? Math.max(0, Math.round(n)) : 500;
+      }
+      const mS = /^([\d.]+)\s*s$/i.exec(raw);
+      if (mS) {
+        const n = Number(mS[1]);
+        return Number.isFinite(n) ? Math.max(0, Math.round(n * 1000)) : 500;
+      }
+    } catch {
+      /* ignore */
+    }
+    return 500;
+  }
+
+  /** Glitch plein écran : durée CSS puis retrait des classes (animationend ou délai si reduced-motion). */
+  function armPageGlitchAutoEnd() {
+    if (!storyRoot) return;
+    cancelPageGlitchEndScheduling();
+    const reduce =
+      typeof window !== "undefined" &&
+      window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) {
+      pageGlitchEndTimerId = window.setTimeout(() => {
+        pageGlitchEndTimerId = 0;
+        teardownPageGlitchBurst();
+      }, readPageGlitchDurationMs());
+      return;
+    }
+    storyRoot.addEventListener("animationend", onStoryPageGlitchAnimationEnd);
+  }
+
+  /**
+   * Même animation que (fx: glitch) dans le corps, puis résolution de la Promise (clic sur une option).
+   * @param {"on"|"strong"} mode
+   */
+  function runPageGlitchBurst(mode) {
+    if (!storyRoot) return Promise.resolve();
+    teardownPageGlitchBurst();
+    void storyRoot.offsetHeight;
+    snapshotGlitchPageBackdrop();
+    if (mode === "strong") {
+      storyRoot.classList.add("story-root--page-glitch", "story-root--page-glitch-strong");
+    } else {
+      storyRoot.classList.add("story-root--page-glitch");
+    }
+    void storyRoot.offsetHeight;
+    const reduce =
+      typeof window !== "undefined" &&
+      window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) {
+      return new Promise((resolve) => {
+        pageGlitchEndTimerId = window.setTimeout(() => {
+          pageGlitchEndTimerId = 0;
+          teardownPageGlitchBurst();
+          resolve();
+        }, readPageGlitchDurationMs());
+      });
+    }
+    return new Promise((resolve) => {
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        storyRoot.removeEventListener("animationend", onEnd);
+        clearTimeout(fallback);
+        teardownPageGlitchBurst();
+        resolve();
+      };
+      const onEnd = (ev) => {
+        if (ev.target !== storyRoot) return;
+        if (ev.animationName !== "story-page-glitch-main") return;
+        if (ev.pseudoElement) return;
+        finish();
+      };
+      const fallback = window.setTimeout(finish, readPageGlitchDurationMs() + 100);
+      storyRoot.addEventListener("animationend", onEnd);
+    });
+  }
+
+  function applyStoryRootFxInvertFlag(on) {
+    if (!storyRoot) return;
+    if (on) {
+      storyRoot.style.setProperty("--fx-page-invert", "1");
+      storyRoot.style.setProperty("--fx-page-hue-extra", "180deg");
+      storyRoot.classList.add("story-root--fx-invert-live");
+      snapshotGlitchPageBackdrop();
+    } else {
+      storyRoot.style.setProperty("--fx-page-invert", "0");
+      storyRoot.style.setProperty("--fx-page-hue-extra", "0deg");
+      storyRoot.classList.remove("story-root--fx-invert-live");
+      clearGlitchPageBackdrop();
+    }
+  }
+
+  function syncPendingPageFxInvert() {
+    if (pendingPageFxInvert == null || !storyRoot) {
+      pendingPageFxInvert = null;
+      return;
+    }
+    applyStoryRootFxInvertFlag(pendingPageFxInvert === true);
+    pendingPageFxInvert = null;
+  }
+
+  function applyFxMarkers(s) {
+    return s.replace(/\(\s*fx:\s*([^)]+)\)/gi, (_, inner) => {
+      const compact = String(inner).trim().toLowerCase().replace(/\s+/g, "");
+      if (compact === "inverttrue") {
+        pendingPageFxInvert = true;
+        return "";
+      }
+      if (compact === "invertfalse") {
+        pendingPageFxInvert = false;
+        return "";
+      }
+      if (compact === "glitch" || compact === "glitchon") {
+        pendingPageGlitch = "on";
+        return "";
+      }
+      if (compact === "glitch++" || compact === "glitchstrong") {
+        pendingPageGlitch = "strong";
+        return "";
+      }
+      if (compact === "glitchoff" || compact === "noglitch") {
+        pendingPageGlitch = "off";
+        return "";
+      }
+      return "";
+    });
+  }
+
+  function syncPendingPageGlitch() {
+    if (pendingPageGlitch == null || !storyRoot) {
+      pendingPageGlitch = null;
+      return;
+    }
+    if (pendingPageGlitch === "off") {
+      teardownPageGlitchBurst();
+    } else if (pendingPageGlitch === "strong") {
+      cancelPageGlitchEndScheduling();
+      storyRoot.classList.remove(
+        "story-root--page-glitch",
+        "story-root--page-glitch-strong",
+      );
+      void storyRoot.offsetHeight;
+      snapshotGlitchPageBackdrop();
+      storyRoot.classList.add("story-root--page-glitch", "story-root--page-glitch-strong");
+      armPageGlitchAutoEnd();
+    } else if (pendingPageGlitch === "on") {
+      cancelPageGlitchEndScheduling();
+      storyRoot.classList.remove(
+        "story-root--page-glitch",
+        "story-root--page-glitch-strong",
+      );
+      void storyRoot.offsetHeight;
+      snapshotGlitchPageBackdrop();
+      storyRoot.classList.add("story-root--page-glitch");
+      armPageGlitchAutoEnd();
+    }
+    pendingPageGlitch = null;
   }
 
   /** `$texte$` → span effet glitch (texte échappé, pas de Markdown à l’intérieur). */
@@ -413,6 +678,7 @@
 
     out = replaceConditionalMarkers(out, depth, ctx);
     out = expandVars(out);
+    if (!ctx.skipFx) out = applyFxMarkers(out);
     out = applyGlitchMarkers(out);
     if (!ctx.skipClear) {
       out = out.replace(/\(\s*clear\s*\)/gi, () => {
@@ -423,6 +689,59 @@
       out = out.replace(/\(\s*clear\s*\)/gi, "");
     }
     return out;
+  }
+
+  /** Découpe le corps en alternance `md` / `wait` pour tous les `(wait: ms)` (plusieurs par passage). */
+  function extractWaitTimelineSegments(bodyMd) {
+    const re = /\(\s*wait:\s*(\d+)\s*\)/gi;
+    const segments = [];
+    let last = 0;
+    for (const m of bodyMd.matchAll(re)) {
+      segments.push({ kind: "md", text: bodyMd.slice(last, m.index) });
+      const n = parseInt(m[1], 10);
+      const waitMs = Number.isFinite(n) ? Math.min(120000, Math.max(0, n)) : 0;
+      segments.push({ kind: "wait", ms: waitMs });
+      last = m.index + m[0].length;
+    }
+    segments.push({ kind: "md", text: bodyMd.slice(last) });
+    return segments;
+  }
+
+  function bodyHasWaitMarkers(bodyMd) {
+    return /\(\s*wait:\s*\d+\s*\)/i.test(bodyMd);
+  }
+
+  function stripWaitMarkersFromBody(bodyMd) {
+    return bodyMd
+      .replace(/\(\s*wait:\s*\d+\s*\)/gi, "")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+  }
+
+  function flushChronicleClearIfNeeded() {
+    if (pendingChronicleClear && chronicle) {
+      chronicle.replaceChildren();
+      window.scrollTo(0, 0);
+      chronicle.scrollTop = 0;
+    }
+    pendingChronicleClear = false;
+  }
+
+  function processBodySliceAndSync(rawMd) {
+    const processed = processMarkers(rawMd);
+    syncPendingPageFxInvert();
+    syncPendingPageGlitch();
+    return processed;
+  }
+
+  function appendStoryArticle(nodeId, processedMd) {
+    const article = document.createElement("article");
+    article.className = "story-node";
+    article.dataset.node = nodeId;
+    article.innerHTML = marked.parse(processedMd, { async: false });
+    const contentDoneMs = applyParagraphFades(article);
+    chronicle.appendChild(article);
+    return contentDoneMs;
   }
 
   marked.use({
@@ -477,6 +796,22 @@
     });
   }
 
+  /** Retire les `(fx: …)` d’une ligne d’option ; le dernier marqueur de chaque type gagne. */
+  function stripOptionLinePageFx(s) {
+    let pageFx = null;
+    let fxInvert = null;
+    const md = s.replace(/\(\s*fx:\s*([^)]+)\)/gi, (_, inner) => {
+      const compact = String(inner).trim().toLowerCase().replace(/\s+/g, "");
+      if (compact === "glitch" || compact === "glitchon") pageFx = "on";
+      else if (compact === "glitch++" || compact === "glitchstrong") pageFx = "strong";
+      else if (compact === "glitchoff" || compact === "noglitch") pageFx = "off";
+      else if (compact === "inverttrue") fxInvert = true;
+      else if (compact === "invertfalse") fxInvert = false;
+      return "";
+    });
+    return { md: md.trim(), pageFx, fxInvert };
+  }
+
   /** Une ligne du bloc options : mêmes marqueurs que le corps (`(if:)`, `(set:)`, etc.). */
   function choiceFromOptionLine(line) {
     let s = line.trim();
@@ -491,13 +826,22 @@
         s = mwrap[1].trim();
       }
     }
-    const processed = processMarkers(s, 0, { skipClear: true });
+    const stripped = stripOptionLinePageFx(s);
+    s = stripped.md;
+    const pageFx =
+      stripped.pageFx === "on" || stripped.pageFx === "strong"
+        ? stripped.pageFx
+        : null;
+    const fxInvert = stripped.fxInvert;
+    const processed = processMarkers(s, 0, { skipClear: true, skipFx: true });
     const lm = /\[([^\]]*)\]\(([^)]+)\)/.exec(processed.trim());
     if (!lm) return null;
     return {
       label: lm[1].trim(),
       target: lm[2].trim(),
       ifNotYet,
+      pageFx,
+      fxInvert,
     };
   }
 
@@ -549,6 +893,9 @@
       a.href = "#";
       a.className = "story-goto";
       a.dataset.node = opt.target;
+      if (opt.pageFx) a.dataset.pageFx = opt.pageFx;
+      if (opt.fxInvert === true) a.dataset.fxInvert = "1";
+      else if (opt.fxInvert === false) a.dataset.fxInvert = "0";
       if (opt.label.includes("<")) a.innerHTML = opt.label;
       else a.textContent = opt.label;
       li.appendChild(a);
@@ -561,24 +908,73 @@
   function appendNodeBlock(nodeId) {
     const node = nodes[nodeId];
     if (!node) return;
+    if (nodeWaitTimerId) {
+      clearTimeout(nodeWaitTimerId);
+      nodeWaitTimerId = 0;
+    }
     nodeHistory.push(nodeId);
     visited.add(nodeId);
     pendingChronicleClear = false;
-    const processed = processMarkers(node.bodyMd);
-    if (pendingChronicleClear) {
-      chronicle.replaceChildren();
-      window.scrollTo(0, 0);
-      chronicle.scrollTop = 0;
+
+    const segments = extractWaitTimelineSegments(node.bodyMd);
+    const timelineActive =
+      !restorePass &&
+      segments.some((s) => s.kind === "wait" && s.ms > 0) &&
+      segments.some((s) => s.kind === "md" && s.text.trim() !== "");
+
+    const finishNodeUi = (contentDoneMs, doPersist) => {
+      renderOptions(node, contentDoneMs);
+      renderVars();
+      if (doPersist && !restorePass) persistState();
+      if (chronicle) chronicle.scrollTop = chronicle.scrollHeight;
+    };
+
+    if (!timelineActive) {
+      const rawBody = bodyHasWaitMarkers(node.bodyMd)
+        ? stripWaitMarkersFromBody(node.bodyMd)
+        : node.bodyMd;
+      const processed = processBodySliceAndSync(rawBody);
+      flushChronicleClearIfNeeded();
+      const contentDoneMs = appendStoryArticle(nodeId, processed);
+      finishNodeUi(contentDoneMs, true);
+      return;
     }
-    const article = document.createElement("article");
-    article.className = "story-node";
-    article.dataset.node = nodeId;
-    article.innerHTML = marked.parse(processed, { async: false });
-    const contentDoneMs = applyParagraphFades(article);
-    chronicle.appendChild(article);
-    renderOptions(node, contentDoneMs);
-    renderVars();
-    if (!restorePass) persistState();
+
+    if (optionsNav) optionsNav.innerHTML = "";
+
+    let lastContentDoneMs = 0;
+
+    function finishTimeline() {
+      nodeWaitTimerId = 0;
+      pendingChronicleClear = false;
+      finishNodeUi(lastContentDoneMs, true);
+    }
+
+    function runFrom(segIdx) {
+      nodeWaitTimerId = 0;
+      pendingChronicleClear = false;
+      let i = segIdx;
+      while (i < segments.length) {
+        const seg = segments[i];
+        i += 1;
+        if (seg.kind === "md") {
+          if (seg.text.trim()) {
+            const processed = processBodySliceAndSync(seg.text);
+            flushChronicleClearIfNeeded();
+            lastContentDoneMs = appendStoryArticle(nodeId, processed);
+            renderVars();
+          }
+          continue;
+        }
+        if (seg.kind === "wait" && seg.ms > 0) {
+          nodeWaitTimerId = window.setTimeout(() => runFrom(i), seg.ms);
+          return;
+        }
+      }
+      finishTimeline();
+    }
+
+    runFrom(0);
   }
 
   function goToNode(nodeId) {
@@ -587,13 +983,40 @@
     chronicle.scrollTop = chronicle.scrollHeight;
   }
 
+  let optionPageGlitchBusy = false;
+
   document.addEventListener("click", (ev) => {
     const a = ev.target.closest("a.story-goto");
     if (!a) return;
-    if (!chronicle.contains(a) && !optionsNav.contains(a)) return;
+    if (!chronicle.contains(a) && !(optionsNav && optionsNav.contains(a))) return;
     ev.preventDefault();
     const id = a.dataset.node;
-    if (id) goToNode(id);
+    if (!id) return;
+    if (optionsNav && optionsNav.contains(a)) {
+      const inv = a.dataset.fxInvert;
+      if (inv === "1") applyStoryRootFxInvertFlag(true);
+      else if (inv === "0") applyStoryRootFxInvertFlag(false);
+    }
+    const fx = a.dataset.pageFx;
+    if (
+      optionsNav &&
+      optionsNav.contains(a) &&
+      (fx === "on" || fx === "strong")
+    ) {
+      if (optionPageGlitchBusy) return;
+      optionPageGlitchBusy = true;
+      a.setAttribute("aria-busy", "true");
+      runPageGlitchBurst(fx)
+        .then(() => {
+          goToNode(id);
+        })
+        .finally(() => {
+          optionPageGlitchBusy = false;
+          a.removeAttribute("aria-busy");
+        });
+      return;
+    }
+    goToNode(id);
   });
 
   function formatAboutValue(v) {

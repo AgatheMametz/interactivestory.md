@@ -16,7 +16,6 @@ _css
         font-family: "PT Serif", serif;
         font-size: 1.2rem;
         line-height: 1.5;
-        margin-top: 3rem;
     }
     a {
         color:rgb(8, 105, 165);
@@ -30,6 +29,7 @@ _css
     }
 	main {
 		max-width: 42rem;
+        padding-top: 3rem;
 	}
 
     footer {
@@ -165,7 +165,7 @@ vérifier_chaînes
         (ifnotyet)([Réfléchir à un plan](réfléchir_à_un_plan))
         (ifnotyet)([Demander pitié](pitié))
         (ifnotyet)([Tendre l'oreille](tendre_oreille))
-        (if: garde_pitie = true)([Attaquer le garde](attaquer_garde_pitie))
+        (if: garde_pitie = true)([$Prendre la relique$](prendre_relique))(fx: glitch)
 
 tendre_oreille
     C'est un silence de mort.
@@ -184,7 +184,7 @@ tendre_oreille
         (ifnotyet)([Réfléchir à un plan](réfléchir_à_un_plan))
         (ifnotyet)([Demander pitié](pitié))
         (ifnotyet)([Tendre l'oreille](tendre_oreille))
-        (if: garde_pitie = true)([Attaquer le garde](attaquer_garde_pitie))
+        (if: garde_pitie = true)([$Prendre la relique$](prendre_relique))(fx: glitch)
 
 regarder_autour_de_vous
     (clear)
@@ -205,7 +205,7 @@ regarder_autour_de_vous
         (ifnotyet)([Réfléchir à un plan](réfléchir_à_un_plan))
         (ifnotyet)([Demander pitié](pitié))
         (ifnotyet)([Tendre l'oreille](tendre_oreille))
-        (if: garde_pitie = true)([Attaquer le garde](attaquer_garde_pitie))
+        (if: garde_pitie = true)([$Prendre la relique$](prendre_relique))(fx: glitch)
 
 pitié
     "Elphée, ma femme, je dois sauver ma femme. Vous êtes humains, vous aussi. Vous devez comprendre. Vous devez comprendre !!"
@@ -228,23 +228,24 @@ pitié
         (ifnotyet)([Réfléchir à un plan](réfléchir_à_un_plan))
         (ifnotyet)([Demander pitié](pitié))
         (ifnotyet)([Tendre l'oreille](tendre_oreille))
-        (if: garde_pitie = true)([Attaquer le garde](attaquer_garde_pitie))
 
 regarder_autour_de_vous_pitie
     Ce garde qui vous regarde avec pitié a l'air moins dangereux que les autres. En entendant votre voix cassée par la douleur, son visage s'est déformé en une grimace. Il n'est clairement pas à l'aise avec ce qu'il est en train de faire.
 
-    Vous remarquez que il fait tomber une $relique$ de ses bras.
+    Vous remarquez que il fait tomber une relique de ses bras. Le métal perce le silence dans ce couloir nu. $Il s'agit d'une dague maudite$.
 
     (set: garde_pitie true)
 
         (ifnotyet)([Vérifier les chaînes](vérifier_chaînes))
         (ifnotyet)([Demander pitié](pitié))
         (ifnotyet)([Tendre l'oreille](tendre_oreille))
-        (if: garde_pitie = true)([$Prendre la relique$](prendre_relique))
+        (if: garde_pitie = true)([$Prendre la relique$](prendre_relique))(fx: glitch)
 
 
 réfléchir_à_un_plan
     Rien ne vous vient à l'esprit
+
+    (set: garde_pitie true)
 
     (clear)
         Vous continuez de marcher.
@@ -255,8 +256,54 @@ réfléchir_à_un_plan
         (ifnotyet)([Réfléchir à un plan](réfléchir_à_un_plan))
         (ifnotyet)([Demander pitié](pitié))
         (ifnotyet)([Tendre l'oreille](tendre_oreille))
-        (if: garde_pitie = true)([$Prendre la relique$](prendre_relique))
+        (if: garde_pitie = true)([$Prendre la relique$](prendre_relique))(fx: glitch)
 
 prendre_relique
     (clear)
-    (fx: glitch++)
+
+    (fx: invert true)
+
+    # Lorsque vous touchez la relique, une énergie étrangère vous traverse.
+
+    (wait: 3000)
+
+    # Cet objet est dangereux.
+
+    (wait: 4000)
+
+    Le pommeau de la dague vous brûle la pomme de votre main.
+
+        [S'accrocher](saccrocher)(fx: glitch)
+        [Lâcher](lacher)(fx: glitch)
+
+saccrocher
+    (clear)
+    Mais vous tenez bon. Même si vous deviez en perdre votre main, si cet artefacte magique peut vous aider, cela vaudra le coup.
+    
+    (wait: 3000)
+
+    Une voix raisonne dans votre esprit.
+
+    (wait: 3000)
+
+    *Porteur, mon pouvoir est immense.*
+    *La réalité même se courbe à mon existance.*
+
+    (wait: 3000)
+
+    *Pour profiter de mes abilités,*
+    *D'un souvenir il faut te $délester$.*
+
+    (wait: 3000)
+
+    *Réfléchi bien au présent que tu me partages,*
+    *Selon sa puissance, je mettrai coeur à l'ouvrage.*
+
+    (wait: 5000)
+
+    Quel souvenir cédez-vous ?
+
+        [Oublier la guerre](oublier_guerre)
+        [Oublier la Reine](oublier_reine)
+        [Oublier vos compagnons d'armes](oublier_compagnons)
+        [Oublier Elphée](oublier_elphee)
