@@ -240,8 +240,29 @@
     return a === b;
   }
 
+  function compareValues(a, b) {
+    const na = Number(a);
+    const nb = Number(b);
+    if (Number.isFinite(na) && Number.isFinite(nb)) return na - nb;
+    return String(a).localeCompare(String(b), "fr", { sensitivity: "base" });
+  }
+
   function evalCondition(expr) {
     const e = expr.trim();
+    const cmp = /^([\p{L}_][\p{L}\p{N}_]*)\s*(>=|<=|!=|<>|>|<)\s*(.+)$/u.exec(
+      e,
+    );
+    if (cmp) {
+      const left = vars[cmp[1]];
+      const right = parseLiteral(cmp[3].trim());
+      const op = cmp[2];
+      const c = compareValues(left, right);
+      if (op === ">") return c > 0;
+      if (op === "<") return c < 0;
+      if (op === ">=") return c >= 0;
+      if (op === "<=") return c <= 0;
+      if (op === "!=" || op === "<>") return !valuesEqual(left, right);
+    }
     const eq = /^([\p{L}_][\p{L}\p{N}_]*)\s*=\s*(.+)$/u.exec(e);
     if (eq) {
       const name = eq[1];
@@ -511,12 +532,47 @@
     });
   }
 
+  /**
+   * `[texte](cible)(removelink)` : au rendu, toujours un lien cliquable.
+   * Les entrées déjà dans la chronique perdent le lien quand `cible` est visitée
+   * (`stripChronicleRemoveLinksTo`) ; un retour sur le nœud source réaffiche le lien.
+   */
+  function applyRemoveLinkMarkers(s) {
+    return s.replace(
+      /\[([^\]]*)\]\(([^)]+)\)\s*\(\s*removelink\s*\)/gi,
+      (_, label, target) => `[${label}](${target.trim()} "removelink")`,
+    );
+  }
+
+  /** Remplace un lien `(removelink)` par son texte (sans casser le formatage inline). */
+  function unwrapStoryGotoLink(a) {
+    const span = document.createElement("span");
+    span.innerHTML = a.innerHTML;
+    a.replaceWith(span);
+    return span;
+  }
+
+  /** Remplace par du texte les liens `(removelink)` de la chronique vers un passage déjà joué. */
+  function stripChronicleRemoveLinksTo(targetId) {
+    if (!chronicle) return;
+    for (const a of chronicle.querySelectorAll(
+      'a.story-goto[data-removelink="1"]',
+    )) {
+      if (a.dataset.node !== targetId) continue;
+      unwrapStoryGotoLink(a);
+    }
+  }
+
   /** Si le fragment est uniquement un id de node connu, en faire un lien Markdown. */
   function ensureStoryLinkIfBareNodeId(fragment) {
     const t = fragment.trim();
     if (!t || /[\s\[\]()]/.test(t)) return fragment;
     if (nodes[t]) return `[${t}](${t})`;
     return fragment;
+  }
+
+  function resetAllVariables() {
+    for (const k of Object.keys(vars)) delete vars[k];
   }
 
   function applySet(inner) {
@@ -676,7 +732,13 @@
       out = out.split(st.raw).join("");
     }
 
+    out = out.replace(/\(\s*reset_variables\s*\)/gi, () => {
+      resetAllVariables();
+      return "";
+    });
+
     out = replaceConditionalMarkers(out, depth, ctx);
+    out = applyRemoveLinkMarkers(out);
     out = expandVars(out);
     if (!ctx.skipFx) out = applyFxMarkers(out);
     out = applyGlitchMarkers(out);
@@ -749,9 +811,13 @@
     renderer: {
       link({ href, title, tokens }) {
         const text = this.parser.parseInline(tokens);
-        const titleAttr = title ? ` title="${escapeAttr(title)}"` : "";
+        const isRemoveLink =
+          title && /^removelink$/i.test(String(title).trim());
+        const titleAttr =
+          title && !isRemoveLink ? ` title="${escapeAttr(title)}"` : "";
+        const removeAttr = isRemoveLink ? ` data-removelink="1"` : "";
         if (nodes[href] && !/^[a-z][a-z0-9+.-]*:/i.test(href)) {
-          return `<a href="#" class="story-goto" data-node="${escapeAttr(href)}"${titleAttr}>${text}</a>`;
+          return `<a href="#" class="story-goto" data-node="${escapeAttr(href)}"${removeAttr}${titleAttr}>${text}</a>`;
         }
         const safeHref = escapeAttr(href);
         return `<a href="${safeHref}" rel="noopener noreferrer"${titleAttr}>${text}</a>`;
@@ -921,6 +987,7 @@
     const alreadyVisited = visited.has(nodeId);
     nodeHistory.push(nodeId);
     visited.add(nodeId);
+    stripChronicleRemoveLinksTo(nodeId);
     pendingChronicleClear = false;
 
     const segments = extractWaitTimelineSegments(node.bodyMd);
@@ -1004,6 +1071,7 @@
     ev.preventDefault();
     const id = a.dataset.node;
     if (!id) return;
+    if (a.dataset.removelink === "1") unwrapStoryGotoLink(a);
     if (optionsNav && optionsNav.contains(a)) {
       const inv = a.dataset.fxInvert;
       if (inv === "1") applyStoryRootFxInvertFlag(true);

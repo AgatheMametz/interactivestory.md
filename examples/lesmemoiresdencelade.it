@@ -23,7 +23,6 @@ _css
     }
     a:hover {
         text-decoration: underline;
-        text-decoration-color: currentColor;
         text-underline-offset: 0.22em;
         text-decoration-thickness: 0.1em;
     }
@@ -35,10 +34,10 @@ _css
     footer {
         margin-top: 10rem;
     }
-    #options a .game-over,
-    .game-over {
-        color: #b00020;
-        font-weight: 700;
+
+    .story-goto:has(.game-over) {
+        color: rgb(255, 99, 128);
+        width: 100%;
     }
 	```
 
@@ -284,12 +283,15 @@ prendre_relique
 lacher
     Votre main ne vous répond plus.
 
+    (set: lutter true)
+
         [Arrêter de lutter](saccrocher)
         [Lâcher](lacher)
 
 saccrocher
     (clear)
-    Mais vous tenez bon. Même si vous deviez en perdre votre main, si cet artefacte magique peut vous aider, cela vaudra le coup.
+    (if: lutter = false)(Mais vous tenez bon. Même si vous deviez en perdre votre main, si cet artefacte magique peut vous aider, cela vaudra le coup.)
+    (if: lutter = true)(Vous vous abandonnez au pouvoir de la dague. Peut-être est-ce pour le meilleur.)
     
     (wait: 3000)
 
@@ -328,7 +330,7 @@ oublier_guerre_relique
 
     Vous avez offert un souvenir à la dague, vous ne savez déjà plus lequel.
 
-    [De la lame de la dague coule du sang.](coule_sang)
+    [De la lame de la dague coule du sang.](coule_sang)(removelink) 
 
 coule_sang
     Tout ce que vous savez, c'est que votre royaume a besoin de vous. Qu'Elphée a besoin de vous. Que vos compagnons d'armes méritent vengeance.
@@ -337,7 +339,7 @@ coule_sang
 
     (wait: 3000)
 
-    [Mais vous ne savez plus vous battre.](ne_savez_plus_battre)
+    [Mais vous ne savez plus vous battre.](ne_savez_plus_battre)(removelink)
 
 ne_savez_plus_battre
     Vous vous démenez pour quitter vos chaînes en gémissant. Vous devez les sauver ! Mais vous ne savez plus comment.
@@ -346,13 +348,9 @@ ne_savez_plus_battre
 
 game_over
     (clear)
+    (reset_variables)
     (fx: invert true)
     La relique vous ramène à elle.
-
-    (set: souvenir_guerre true)
-    (set: souvenir_reine true)
-    (set: souvenir_compagnons true)
-    (set: souvenir_elphee true)
 
         [<span class="game-over">Recommencer</span>](prendre_relique)(fx: glitch)
 
@@ -365,7 +363,7 @@ oublier_reine_relique
 
     Vous avez offert un souvenir à la dague, vous ne savez déjà plus lequel.
 
-    [La lame se met à chauffer, jusqu'à scintiller. Vous serrez fort le pommeau de la dague.](scintiller)
+    [La lame se met à chauffer, jusqu'à scintiller. Vous serrez fort le pommeau de la dague.](scintiller)(removelink)
 
 oublier_compagnons_relique
     (clear)
@@ -375,7 +373,7 @@ oublier_compagnons_relique
 
     Vous avez offert un souvenir à la dague, vous ne savez déjà plus lequel.
 
-    [De la lame coule désormais de l'acide. Vous serrez fort le pommeau de la dague.](scintiller)
+    [De la lame coule désormais de l'acide. Vous serrez fort le pommeau de la dague.](scintiller)(removelink)
 
 oublier_elphee_relique
     (clear)
@@ -385,7 +383,7 @@ oublier_elphee_relique
 
     Vous avez offert un souvenir à la dague, vous ne savez déjà plus lequel.
 
-    [La lame de la dague prend feu. Vous serrez fort le pommeau de la dague.](scintiller)
+    [La lame de la dague prend feu. Vous serrez fort le pommeau de la dague.](scintiller)(removelink)
 
 scintiller
     Tout ce que vous savez, (if: souvenir_actuel = reine)(c'est qu'Elphée a besoin de vous. Que vos compagnons d'armes méritent vengeance. Et surtout, que vous savez vous battre.)(if: souvenir_actuel = compagnons)(c'est qu'Elphée a besoin de vous. Que votre royaume est en péril. Et surtout, que vous savez vous battre.)(if: souvenir_actuel = elphee)(c'est que votre royaume est en péril. Que vos compagnons d'armes méritent vengeance. Et surtout, que vous savez vous battre.)
@@ -396,9 +394,10 @@ scintiller
 
     "Lâche ça tout de suite !"
  
-    Que faites-vous ?
 
     (set: nbr_gardes 3)
+
+        Que faites-vous ?
 
         [Attaquer un garde](attaquer_garde)
         [Prendre le temps de se libérer](se_liberer)
@@ -411,13 +410,22 @@ se_liberer
 
     (set: libre true)
 
-    Les {{nbr_gardes}} gardes vous pointent de leurs lances.
-
-    Celui dont vous avez volé la dague est debout devant vous. Il est surpris
-
-    "Pourquoi ça brille, d'un coup ?!"
+    (if: nbr_gardes = 3)(Les {{nbr_gardes}} gardes vous pointent de leurs lances.
     
-    Que faites-vous ?
+    Celui dont vous avez volé la dague est debout devant vous. Il est surpris)
+
+    (if: nbr_gardes = 2)(Les {{nbr_gardes}} gardes vous pointent de leurs lances.
+    
+    Celui dont vous avez volé la dague est debout devant vous. Il est surpris)
+
+    (if: nbr_gardes = 1)(Le dernier garde est debout devant vous.)
+
+    (if: nbr_gardes > 0)(
+
+    (if: souvenir_actuel = reine)("La dague ?! Quelle est sorcelerie ?!")
+    (if: souvenir_actuel = compagnons)("C'est quoi ce liquide vert ?! C'est du poison ??")
+    (if: souvenir_actuel = elphee)("La dague !! Il a libéré les flammes des enfers !!")
+    )
 
         (if: nbr_gardes = 3)([Attaquer](attaquer_garde))
         (if: nbr_gardes = 2)([Tuer le deuxième garde](attaquer_garde_deuxième_garde))
@@ -434,8 +442,6 @@ attaquer_garde
     (wait: 3000)
 
     Vous vous retournez et voyez les deux autres gardes qui se précipitent vers vous. L'un d'eux, un homme âgé avec une barbe tressée, vous hurle : "Rendez-vous !"
-
-    Que faites-vous ?
 
         (ifnotyet)([Tuer un deuxième garde](attaquer_garde_deuxième_garde))
         (ifnotyet)([Se libérer](se_liberer))
@@ -461,8 +467,6 @@ tuer_deuxième_garde
     Encore à terre, vous tournez votre regard vers le dernier garde. Il s'agit d'un jeune homme, sans expérience. 
     
     "AAAH !"
-
-    Que faites-vous ?
 
         (if: nbr_gardes = 1)([Tuer le dernier garde](tuer_dernier_garde))
         (ifnotyet)([Se libérer](se_liberer))

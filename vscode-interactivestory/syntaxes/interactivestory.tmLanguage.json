@@ -47,6 +47,7 @@
         { "include": "#story-if-ternary" },
         { "include": "#story-ifnotyet-keyword" },
         { "include": "#story-clear" },
+        { "include": "#story-reset-variables" },
         { "include": "#story-var-brace" }
       ]
     },
@@ -138,6 +139,16 @@
     },
     "story-clear": {
       "match": "(?i)(\\()(\\s*)(clear)(\\s*)(\\))",
+      "captures": {
+        "1": { "name": "punctuation.section.embedded.begin.interactivestory" },
+        "2": { "name": "" },
+        "3": { "name": "support.function.interactivestory" },
+        "4": { "name": "" },
+        "5": { "name": "punctuation.section.embedded.end.interactivestory" }
+      }
+    },
+    "story-reset-variables": {
+      "match": "(?i)(\\()(\\s*)(reset_variables)(\\s*)(\\))",
       "captures": {
         "1": { "name": "punctuation.section.embedded.begin.interactivestory" },
         "2": { "name": "" },
