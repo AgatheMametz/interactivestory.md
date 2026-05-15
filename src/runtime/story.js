@@ -734,12 +734,12 @@
     return processed;
   }
 
-  function appendStoryArticle(nodeId, processedMd) {
+  function appendStoryArticle(nodeId, processedMd, fastReveal = false) {
     const article = document.createElement("article");
     article.className = "story-node";
     article.dataset.node = nodeId;
     article.innerHTML = marked.parse(processedMd, { async: false });
-    const contentDoneMs = applyParagraphFades(article);
+    const contentDoneMs = applyParagraphFades(article, fastReveal);
     chronicle.appendChild(article);
     return contentDoneMs;
   }
@@ -849,6 +849,9 @@
   const PARA_FADE_MS = 2200;
   /** Délai entre le début du fondu de chaque bloc enfant du nœud. */
   const PARA_STAGGER_MS = 750;
+  /** Relecture d’un nœud déjà visité (boucle game over, etc.). */
+  const PARA_FADE_MS_FAST = 500;
+  const PARA_STAGGER_MS_FAST = 120;
   /** Délai entre chaque option après la fin du contenu (ms). */
   const OPTION_STAGGER_MS = 100;
 
@@ -856,16 +859,19 @@
    * Fondu bloc par bloc sur les enfants directs de l’article (sortie Markdown).
    * @returns {number} ms jusqu’à la fin du fondu du dernier bloc (0 si aucun bloc).
    */
-  function applyParagraphFades(articleEl) {
+  function applyParagraphFades(articleEl, fastReveal = false) {
+    const fadeMs = fastReveal ? PARA_FADE_MS_FAST : PARA_FADE_MS;
+    const staggerMs = fastReveal ? PARA_STAGGER_MS_FAST : PARA_STAGGER_MS;
     const blocks = Array.from(articleEl.children);
     let i = 0;
     for (const el of blocks) {
       el.classList.add("para-fade");
-      el.style.setProperty("--para-d", `${i * PARA_STAGGER_MS}ms`);
+      el.style.setProperty("--para-fade", `${fadeMs}ms`);
+      el.style.setProperty("--para-d", `${i * staggerMs}ms`);
       i += 1;
     }
     if (blocks.length === 0) return 0;
-    return (blocks.length - 1) * PARA_STAGGER_MS + PARA_FADE_MS;
+    return (blocks.length - 1) * staggerMs + fadeMs;
   }
 
   /**
@@ -912,6 +918,7 @@
       clearTimeout(nodeWaitTimerId);
       nodeWaitTimerId = 0;
     }
+    const alreadyVisited = visited.has(nodeId);
     nodeHistory.push(nodeId);
     visited.add(nodeId);
     pendingChronicleClear = false;
@@ -919,6 +926,7 @@
     const segments = extractWaitTimelineSegments(node.bodyMd);
     const timelineActive =
       !restorePass &&
+      !alreadyVisited &&
       segments.some((s) => s.kind === "wait" && s.ms > 0) &&
       segments.some((s) => s.kind === "md" && s.text.trim() !== "");
 
@@ -935,7 +943,11 @@
         : node.bodyMd;
       const processed = processBodySliceAndSync(rawBody);
       flushChronicleClearIfNeeded();
-      const contentDoneMs = appendStoryArticle(nodeId, processed);
+      const contentDoneMs = appendStoryArticle(
+        nodeId,
+        processed,
+        alreadyVisited,
+      );
       finishNodeUi(contentDoneMs, true);
       return;
     }
@@ -961,7 +973,7 @@
           if (seg.text.trim()) {
             const processed = processBodySliceAndSync(seg.text);
             flushChronicleClearIfNeeded();
-            lastContentDoneMs = appendStoryArticle(nodeId, processed);
+            lastContentDoneMs = appendStoryArticle(nodeId, processed, false);
             renderVars();
           }
           continue;

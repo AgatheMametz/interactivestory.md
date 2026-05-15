@@ -35,6 +35,11 @@ _css
     footer {
         margin-top: 10rem;
     }
+    #options a .game-over,
+    .game-over {
+        color: #b00020;
+        font-weight: 700;
+    }
 	```
 
 debut
@@ -276,6 +281,12 @@ prendre_relique
         [S'accrocher](saccrocher)(fx: glitch)
         [Lâcher](lacher)(fx: glitch)
 
+lacher
+    Votre main ne vous répond plus.
+
+        [Arrêter de lutter](saccrocher)
+        [Lâcher](lacher)
+
 saccrocher
     (clear)
     Mais vous tenez bon. Même si vous deviez en perdre votre main, si cet artefacte magique peut vous aider, cela vaudra le coup.
@@ -303,7 +314,44 @@ saccrocher
 
     Quel souvenir cédez-vous ?
 
-        [Oublier la guerre](oublier_guerre)
-        [Oublier la Reine](oublier_reine)
-        [Oublier vos compagnons d'armes](oublier_compagnons)
-        [Oublier Elphée](oublier_elphee)
+        [Oublier la guerre](oublier_guerre_relique)(fx: glitch)
+        [Oublier la Reine](oublier_reine_relique)(fx: glitch)
+        [Oublier vos compagnons d'armes](oublier_compagnons_relique)(fx: glitch)
+        [Oublier Elphée](oublier_elphee_relique)(fx: glitch)
+
+
+
+oublier_guerre_relique
+    (clear)
+    (set: souvenir_guerre false)
+    (fx: invert false)
+
+    Vous avez offert un souvenir à la dague, vous ne savez déjà plus lequel.
+
+    [De la lame de la dague coule du sang.](coule_sang)
+
+coule_sang
+    Tout ce que vous savez, c'est que votre royaume a besoin de vous. Qu'Elphée a besoin de vous. Que vos compagnons d'armes méritent vengeance.
+
+    Vous vous dites : "J'ai un devoir envers tous ces gens."
+
+    (wait: 3000)
+
+    [Mais vous ne savez plus vous battre.](ne_savez_plus_battre)
+
+ne_savez_plus_battre
+    Vous vous démenez pour quitter vos chaînes en gémissant. Vous devez les sauver ! Mais vous êtes désormais incapable de le faire.
+
+        [<span class="game-over">Le soldat à qui vous avez volé la dague vous plante de sa lance dans le cœur.</span>](game_over)
+
+game_over
+    (clear)
+    (fx: invert true)
+    La relique vous ramène à elle.
+
+    (set: souvenir_guerre true)
+    (set: souvenir_reine true)
+    (set: souvenir_compagnons true)
+    (set: souvenir_elphee true)
+
+        [<span class="game-over">Recommencer</span>](prendre_relique)(fx: glitch)
