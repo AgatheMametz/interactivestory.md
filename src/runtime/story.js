@@ -247,8 +247,41 @@
     return String(a).localeCompare(String(b), "fr", { sensitivity: "base" });
   }
 
-  function evalCondition(expr) {
+  /** Découpe `a & b or c` en respectant les guillemets (priorité AND/OR gérée par l’appelant). */
+  function splitLogical(expr, kind) {
+    const re =
+      kind === "or"
+        ? /\s+(?:or|\|\|)\s+/giu
+        : /\s+(?:&&|&|\band\b)\s+/giu;
+    const parts = [];
+    let start = 0;
+    let inQuote = false;
+    let i = 0;
+    while (i < expr.length) {
+      if (expr[i] === '"') {
+        inQuote = !inQuote;
+        i += 1;
+        continue;
+      }
+      if (!inQuote) {
+        re.lastIndex = i;
+        const m = re.exec(expr);
+        if (m && m.index === i) {
+          parts.push(expr.slice(start, i));
+          i = m.index + m[0].length;
+          start = i;
+          continue;
+        }
+      }
+      i += 1;
+    }
+    parts.push(expr.slice(start));
+    return parts.map((p) => p.trim()).filter(Boolean);
+  }
+
+  function evalConditionAtom(expr) {
     const e = expr.trim();
+    if (!e) return false;
     const cmp = /^([\p{L}_][\p{L}\p{N}_]*)\s*(>=|<=|!=|<>|>|<)\s*(.+)$/u.exec(
       e,
     );
@@ -274,6 +307,24 @@
       return valuesEqual(vars[shorthand[1]], parseLiteral(shorthand[2]));
     }
     return truthy(vars[e]);
+  }
+
+  /** Conditions composées : AND (`&`, `&&`, `and`) puis OR (`or`, `||`) — AND plus prioritaire. */
+  function evalCondition(expr) {
+    const e = expr.trim();
+    if (!e) return false;
+    const orParts = splitLogical(e, "or");
+    if (orParts.length > 1) {
+      return orParts.some((part) => {
+        const andParts = splitLogical(part, "and");
+        return andParts.every((atom) => evalConditionAtom(atom));
+      });
+    }
+    const andParts = splitLogical(e, "and");
+    if (andParts.length > 1) {
+      return andParts.every((atom) => evalConditionAtom(atom));
+    }
+    return evalConditionAtom(e);
   }
 
   /** Affiche la valeur d’une variable dans le markdown (corps, ternaires, blocs binaires). */

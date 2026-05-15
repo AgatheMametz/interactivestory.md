@@ -475,17 +475,19 @@ tuer_deuxième_garde
 tuer_dernier_garde
     Avant d'enfoncer votre arme dans l'oeil du jeune homme, vous lisez dans ses yeux une tristesse.
     
-    Il s'écroule avec un visage figé dans cette expression.
+    Il s'écroule avec un visage figé dans cette expression qui ressemble à une grimace. Ce visage vous hantera.
 
     (set: nbr_gardes--)
+
+    Les trois gardes sont morts.
+
+    Que faites-vous ?
 
         (ifnotyet)([Se libérer](se_liberer))
         (if: libre = true)([Se mettre à courrir](se_mettre_à_courrir))
 
 se_mettre_à_courrir_sans_garde
     (clear)
-    Vous courrez dans les couloirs du château.
+    Alors que vous courrez dans les couloirs du château, (if: souvenir_actuel = reine)(vous sentez que la lame de la dague perd sa chaleur.)(if: souvenir_actuel = elphee)(vous sentez que les flammes de la dague s'éteignent.)(if: souvenir_actuel = compagnons)(vous sentez que l'acide de la dague s'évapore.).
 
-    (if: souvenir_actuel = reine)(La lame de la dague perd sa chaleur.)
-    (if: souvenir_actuel = elphee)(Les flammes de la dague s'éteignent.)
-    (if: souvenir_actuel = compagnons)(L'acide de la dague s'évapore.)
+    
