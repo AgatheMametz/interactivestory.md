@@ -576,8 +576,6 @@ porte_avec_pouvoir_de_la_dague
 
     Vous avez offert un souvenir à la dague, vous ne savez déjà plus lequel.
 
-    (if: souvenir_elphee = false & souvenir_reine = false)(goto: porte_sans_souvenir)
-
     (if: souvenir_actuel = guerre)(
     Partout autour de vous, les objets semblent saigner. Des filets de sang coulent sur les murs, les sols, les meubles.
 
@@ -608,12 +606,15 @@ porte_avec_pouvoir_de_la_dague
     Les gonds de l'énorme porte en fer lâchent.
     )
 
+    (if: souvenir_elphee = false & souvenir_reine = false)(goto: porte_sans_souvenir)
+
+
         [Mettre un grand coup dans la porte](mettre_un_grand_coup_dans_la_porte)
         [Appeler un autre miracle](appeler_un_autre_miracle)
 
 
 porte_sans_souvenir
-    Vous êtes devant une grande porte en fer. Il s'agit de la porte de la salle du trône.
+    ...
 
     (wait: 3000)
 
@@ -621,12 +622,35 @@ porte_sans_souvenir
 
     (wait: 3000)
 
-        Que faites-vous là ?
+    Mais que faites-vous là ? Quel souvenir avez-vous perdu ?
 
-        [Essayer de se souvenir](souvenir_porte)
+        [Essayer de se souvenir](porte_sans_souvenir_2)
 
-souvenir_porte
-    Vous essayez de vous souvenir de la porte. Mais vous ne vous souvenez de rien.
+porte_sans_souvenir_2
+    (ifnot: souvenir_guerre = false)(Vous vous souvenez de la guerre, qui vous a usé durant 40 ans.)
+
+    (ifnot: souvenir_compagnons = false)(Vous vous souvenez de vos compagnons d'armes, qui vous ont sauvé la vie la nuit dernière.)
+
+    (ifnot: souvenir_regard_jeune_garde = false)(Vous vous souvenez du regard d'effroi de ce jeune garde que vous avez épargné.)
+
+    (wait: 3000)
+
+    Mais pourquoi est-ce que cette porte se décompose-t-elle sous vos yeux ?
+
+    [Vous restez un moment devant la porte, désorienté.](porte_sans_souvenir_3)(unlink)
+
+porte_sans_souvenir_3
+    Quelques secondes passent...
+
+    Une patrouille cylienne vous aperçoit. Agard, vous vous laissez encercler.
+    
+    Quand ils vous posent des questions, vous bafouillez quelque chose à propos des ennemis intérieurs et extérieurs.
+
+    Le capitaine de la patrouille n'a pas le temps pour les vieux fous. Il vous abat sans pitié du fer de sa lance.
+
+    [<span class="game-over">Vous avez été tué par une patrouille cylienne.</span>](game_over)
+
+
 
 
 mettre_un_grand_coup_dans_la_porte

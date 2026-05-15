@@ -906,31 +906,20 @@
     }
   }
 
-  /** Découpe le corps en alternance `md` / `wait` pour tous les `(wait: ms)` (plusieurs par passage). */
-  function extractWaitTimelineSegments(bodyMd) {
+  /** Découpe le corps brut en alternance `md` / `wait` (avant `processMarkers` par segment). */
+  function extractRawWaitSegments(bodyMd) {
     const re = /\(\s*wait:\s*(\d+)\s*\)/gi;
     const segments = [];
     let last = 0;
     for (const m of bodyMd.matchAll(re)) {
-      segments.push({ kind: "md", text: bodyMd.slice(last, m.index) });
+      segments.push({ kind: "md", raw: bodyMd.slice(last, m.index) });
       const n = parseInt(m[1], 10);
       const waitMs = Number.isFinite(n) ? Math.min(120000, Math.max(0, n)) : 0;
       segments.push({ kind: "wait", ms: waitMs });
       last = m.index + m[0].length;
     }
-    segments.push({ kind: "md", text: bodyMd.slice(last) });
+    segments.push({ kind: "md", raw: bodyMd.slice(last) });
     return segments;
-  }
-
-  function bodyHasWaitMarkers(bodyMd) {
-    return /\(\s*wait:\s*\d+\s*\)/i.test(bodyMd);
-  }
-
-  function stripWaitMarkersFromBody(bodyMd) {
-    return bodyMd
-      .replace(/\(\s*wait:\s*\d+\s*\)/gi, "")
-      .replace(/\n{3,}/g, "\n\n")
-      .trim();
   }
 
   function flushChronicleClearIfNeeded() {
@@ -951,11 +940,19 @@
     return true;
   }
 
-  function processBodySliceAndSync(rawMd) {
-    const processed = processMarkers(rawMd);
-    syncPendingPageFxInvert();
-    syncPendingPageGlitch();
-    return processed;
+  /** Laisse le temps de lire le texte affiché avant un `(goto:)` (y compris conditionnel). */
+  function schedulePendingGotoAfter(contentDoneMs) {
+    if (!pendingGoto) return false;
+    const run = () => {
+      nodeWaitTimerId = 0;
+      flushPendingGoto();
+    };
+    if (restorePass || contentDoneMs <= 0) {
+      run();
+    } else {
+      nodeWaitTimerId = window.setTimeout(run, contentDoneMs);
+    }
+    return true;
   }
 
   function appendStoryArticle(nodeId, processedMd, fastReveal = false) {
@@ -1265,16 +1262,13 @@
     pendingChronicleClear = false;
     pendingGoto = null;
 
-    const markerProcessed = processMarkers(node.bodyMd);
-    syncPendingPageFxInvert();
-    syncPendingPageGlitch();
-
-    const segments = extractWaitTimelineSegments(markerProcessed);
-    const timelineActive =
+    const rawSegments = extractRawWaitSegments(node.bodyMd);
+    const useWaitDelays =
       !restorePass &&
       !alreadyVisited &&
-      segments.some((s) => s.kind === "wait" && s.ms > 0) &&
-      segments.some((s) => s.kind === "md" && s.text.trim() !== "");
+      rawSegments.some((s) => s.kind === "wait" && s.ms > 0) &&
+      rawSegments.some((s) => s.kind === "md" && s.raw.trim() !== "");
+    const fastReveal = alreadyVisited || restorePass;
 
     const finishNodeUi = (contentDoneMs, doPersist) => {
       if (!pendingGoto) renderOptions(node, contentDoneMs);
@@ -1283,36 +1277,18 @@
       if (chronicle) chronicle.scrollTop = chronicle.scrollHeight;
     };
 
-    if (pendingGoto) {
-      flushChronicleClearIfNeeded();
-      const displayMd = bodyHasWaitMarkers(node.bodyMd)
-        ? stripWaitMarkersFromBody(markerProcessed)
-        : markerProcessed;
-      if (displayMd.trim()) {
-        appendStoryArticle(nodeId, displayMd, alreadyVisited || restorePass);
-      }
-      finishNodeUi(0, !restorePass);
-      if (flushPendingGoto()) return;
-    }
-
-    if (!timelineActive) {
-      const processed = bodyHasWaitMarkers(node.bodyMd)
-        ? stripWaitMarkersFromBody(markerProcessed)
-        : markerProcessed;
-      flushChronicleClearIfNeeded();
-      const contentDoneMs = appendStoryArticle(
-        nodeId,
-        processed,
-        alreadyVisited,
-      );
-      finishNodeUi(contentDoneMs, true);
-      if (flushPendingGoto()) return;
-      return;
-    }
-
-    if (optionsNav) optionsNav.innerHTML = "";
+    if (optionsNav && useWaitDelays) optionsNav.innerHTML = "";
 
     let lastContentDoneMs = 0;
+
+    function playMdSegment(rawMd) {
+      const processed = processMarkers(rawMd);
+      syncPendingPageFxInvert();
+      syncPendingPageGlitch();
+      flushChronicleClearIfNeeded();
+      if (!processed.trim()) return 0;
+      return appendStoryArticle(nodeId, processed, fastReveal);
+    }
 
     function finishTimeline() {
       nodeWaitTimerId = 0;
@@ -1323,30 +1299,29 @@
     function runFrom(segIdx) {
       nodeWaitTimerId = 0;
       let i = segIdx;
-      while (i < segments.length) {
-        const seg = segments[i];
+      while (i < rawSegments.length) {
+        const seg = rawSegments[i];
         i += 1;
         if (seg.kind === "md") {
-          flushChronicleClearIfNeeded();
-          if (seg.text.trim()) {
-            lastContentDoneMs = appendStoryArticle(nodeId, seg.text, false);
-          }
+          lastContentDoneMs = playMdSegment(seg.raw);
           renderVars();
           if (pendingGoto) {
-            nodeWaitTimerId = 0;
             if (!restorePass) persistState();
-            flushPendingGoto();
+            schedulePendingGotoAfter(lastContentDoneMs);
             return;
           }
           continue;
         }
         if (seg.kind === "wait" && seg.ms > 0) {
-          nodeWaitTimerId = window.setTimeout(() => runFrom(i), seg.ms);
-          return;
+          if (useWaitDelays) {
+            nodeWaitTimerId = window.setTimeout(() => runFrom(i), seg.ms);
+            return;
+          }
+          continue;
         }
       }
       finishTimeline();
-      if (flushPendingGoto()) return;
+      schedulePendingGotoAfter(lastContentDoneMs);
     }
 
     runFrom(0);
