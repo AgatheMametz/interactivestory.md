@@ -481,8 +481,6 @@ tuer_dernier_garde
 
     Les trois gardes sont morts.
 
-    Que faites-vous ?
-
         (ifnotyet)([Se libérer](se_liberer))
         (if: libre = true)([Se mettre à courrir](se_mettre_à_courrir))
 
@@ -490,4 +488,22 @@ se_mettre_à_courrir_sans_garde
     (clear)
     Alors que vous courrez dans les couloirs du château, (if: souvenir_actuel = reine)(vous sentez que la lame de la dague perd sa chaleur.)(if: souvenir_actuel = elphee)(vous sentez que les flammes de la dague s'éteignent.)(if: souvenir_actuel = compagnons)(vous sentez que l'acide de la dague s'évapore.).
 
-    
+    Libre, votre objectif est de rejoindre la salle du trône le plus vite possible.
+
+    (if: souvenir_elphee = true & souvenir_reine = true)(Votre esprit est omnibulé par la peur de ne pas arriver à temps pour sauver Elphée et la reine Prunelle. En tant que seul protecteur du Royaume des Asterales, vous ne pouvez pas les laisser mourir.)
+    (if: souvenir_elphee = true & souvenir_reine = false)(Vous ne savez pas pourquoi vous êtes dans ce château, mais votre esprit est omnibulé par la peur de ne pas arriver à temps pour sauver Elphée. )
+    (if: souvenir_elphee = false & souvenir_reine = true)(Votre esprit est omnibulé par la peur de ne pas arriver à temps pour sauver la reine Prunelle. Et si vous mourrez en essayant de la protéger, tant pis. Personne ne vous regrettera de toute façon.)
+
+    Vous arrivez essouflé devant la grande porte qui mène à la salle du trône.
+
+    (goto: porte_fermée)
+
+porte_fermée
+        [Ouvrir](tenter_d_ouvrir_la_porte)
+        [Écouter à la porte](écouter_à_la_porte)
+        [Appeler le pouvoir de la dague](appeler_le_pouvoir_de_la_dague)(fx: glitch)
+
+tenter_d_ouvrir_la_porte
+    Vous essayez d'ouvrir la porte, mais elle est fermée.
+
+    (goto: porte_fermée)

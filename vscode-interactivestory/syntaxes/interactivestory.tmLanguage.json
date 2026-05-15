@@ -48,6 +48,7 @@
         { "include": "#story-ifnotyet-keyword" },
         { "include": "#story-clear" },
         { "include": "#story-reset-variables" },
+        { "include": "#story-goto" },
         { "include": "#story-var-brace" }
       ]
     },
@@ -155,6 +156,18 @@
         "3": { "name": "support.function.interactivestory" },
         "4": { "name": "" },
         "5": { "name": "punctuation.section.embedded.end.interactivestory" }
+      }
+    },
+    "story-goto": {
+      "match": "(?i)(\\()(\\s*)(goto:)(\\s*)([\\p{L}_][\\p{L}\\p{N}_]*)(\\s*)(\\))",
+      "captures": {
+        "1": { "name": "punctuation.section.embedded.begin.interactivestory" },
+        "2": { "name": "" },
+        "3": { "name": "support.function.interactivestory" },
+        "4": { "name": "" },
+        "5": { "name": "markup.underline.link.interactivestory" },
+        "6": { "name": "" },
+        "7": { "name": "punctuation.section.embedded.end.interactivestory" }
       }
     },
     "story-var-brace": {

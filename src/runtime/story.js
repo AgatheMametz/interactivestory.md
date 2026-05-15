@@ -21,6 +21,8 @@
 
   /** Mis à `true` si `processMarkers` retire un `(clear)` du texte courant. */
   let pendingChronicleClear = false;
+  /** Id de passage à afficher après le rendu du passage courant (`(goto: id)`). */
+  let pendingGoto = null;
   /** Timer chaîné pour les `(wait: N)` entre morceaux d’un même passage. */
   let nodeWaitTimerId = 0;
 
@@ -788,6 +790,22 @@
       return "";
     });
 
+    if (!ctx.skipGoto) {
+      out = out.replace(
+        /\(\s*goto:\s*([\p{L}_][\p{L}\p{N}_]*)\s*\)/giu,
+        (_, target) => {
+          const id = target.trim();
+          if (nodes[id]) pendingGoto = id;
+          return "";
+        },
+      );
+    } else {
+      out = out.replace(
+        /\(\s*goto:\s*[\p{L}_][\p{L}\p{N}_]*\s*\)/giu,
+        "",
+      );
+    }
+
     out = replaceConditionalMarkers(out, depth, ctx);
     out = applyRemoveLinkMarkers(out);
     out = expandVars(out);
@@ -838,6 +856,15 @@
       chronicle.scrollTop = 0;
     }
     pendingChronicleClear = false;
+  }
+
+  /** Après affichage du passage courant, enchaîne sur `(goto: id)` si demandé. */
+  function flushPendingGoto() {
+    const id = pendingGoto;
+    pendingGoto = null;
+    if (!id || !nodes[id] || restorePass) return false;
+    goToNode(id);
+    return true;
   }
 
   function processBodySliceAndSync(rawMd) {
@@ -950,7 +977,11 @@
         ? stripped.pageFx
         : null;
     const fxInvert = stripped.fxInvert;
-    const processed = processMarkers(s, 0, { skipClear: true, skipFx: true });
+    const processed = processMarkers(s, 0, {
+      skipClear: true,
+      skipFx: true,
+      skipGoto: true,
+    });
     const lm = /\[([^\]]*)\]\(([^)]+)\)/.exec(processed.trim());
     if (!lm) return null;
     return {
@@ -1040,6 +1071,7 @@
     visited.add(nodeId);
     stripChronicleRemoveLinksTo(nodeId);
     pendingChronicleClear = false;
+    pendingGoto = null;
 
     const segments = extractWaitTimelineSegments(node.bodyMd);
     const timelineActive =
@@ -1049,7 +1081,7 @@
       segments.some((s) => s.kind === "md" && s.text.trim() !== "");
 
     const finishNodeUi = (contentDoneMs, doPersist) => {
-      renderOptions(node, contentDoneMs);
+      if (!pendingGoto) renderOptions(node, contentDoneMs);
       renderVars();
       if (doPersist && !restorePass) persistState();
       if (chronicle) chronicle.scrollTop = chronicle.scrollHeight;
@@ -1067,6 +1099,7 @@
         alreadyVisited,
       );
       finishNodeUi(contentDoneMs, true);
+      if (flushPendingGoto()) return;
       return;
     }
 
@@ -1088,11 +1121,17 @@
         const seg = segments[i];
         i += 1;
         if (seg.kind === "md") {
-          if (seg.text.trim()) {
-            const processed = processBodySliceAndSync(seg.text);
-            flushChronicleClearIfNeeded();
+          const processed = processBodySliceAndSync(seg.text);
+          flushChronicleClearIfNeeded();
+          if (processed.trim()) {
             lastContentDoneMs = appendStoryArticle(nodeId, processed, false);
-            renderVars();
+          }
+          renderVars();
+          if (pendingGoto) {
+            nodeWaitTimerId = 0;
+            if (!restorePass) persistState();
+            flushPendingGoto();
+            return;
           }
           continue;
         }
@@ -1102,6 +1141,7 @@
         }
       }
       finishTimeline();
+      if (flushPendingGoto()) return;
     }
 
     runFrom(0);
