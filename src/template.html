@@ -302,6 +302,26 @@
       footer details {
         margin-top: 0.5rem;
       }
+      .story-footer-toggle {
+        position: fixed;
+        bottom: 0.5rem;
+        right: 0.5rem;
+        z-index: 100;
+        margin: 0;
+        padding: 0.35rem 0.6rem;
+        font-size: 0.85rem;
+        background: Canvas;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        cursor: pointer;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+      }
+      body.story-footer-hidden .story-footer-toggle {
+        bottom: 0.75rem;
+      }
+      body.story-footer-hidden footer {
+        display: none;
+      }
       .story-footer-nav {
         display: flex;
         flex-wrap: wrap;
@@ -502,7 +522,11 @@
       <div id="chronicle" aria-live="polite"></div>
       <nav id="options" aria-label="Choix"></nav>
     </main>
-    <footer>
+    <label class="story-footer-toggle" for="story-footer-visible">
+      <input type="checkbox" id="story-footer-visible" checked />
+      Paramètres
+    </label>
+    <footer id="story-footer">
       <div style="max-width: 500px; margin: 0 auto">
         <div class="story-footer-nav">
           <a id="story-reset" href="#">Repartir du début</a>

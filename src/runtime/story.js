@@ -33,11 +33,12 @@
   const varsPanel = document.getElementById("vars-panel");
   const varsDetails = varsPanel && varsPanel.closest("details");
 
+  const BOOL_COOKIE_MAX_AGE = 365 * 24 * 60 * 60;
   const VARS_OPEN_COOKIE = "interactivestory_vars_open";
-  const VARS_OPEN_MAX_AGE = 365 * 24 * 60 * 60;
+  const FOOTER_VISIBLE_COOKIE = "interactivestory_footer_visible";
 
-  function readVarsDetailsOpenCookie() {
-    const prefix = `${VARS_OPEN_COOKIE}=`;
+  function readBoolCookie(name) {
+    const prefix = `${name}=`;
     for (const part of document.cookie.split("; ")) {
       if (part.startsWith(prefix)) {
         const v = part.slice(prefix.length);
@@ -48,7 +49,7 @@
     return null;
   }
 
-  function writeVarsDetailsOpenCookie(open) {
+  function writeBoolCookie(name, value) {
     const path =
       typeof location !== "undefined" && location.pathname
         ? location.pathname
@@ -57,14 +58,32 @@
       typeof location !== "undefined" && location.protocol === "https:"
         ? "; Secure"
         : "";
-    document.cookie = `${VARS_OPEN_COOKIE}=${open ? "1" : "0"}; path=${path}; max-age=${VARS_OPEN_MAX_AGE}; SameSite=Lax${secure}`;
+    document.cookie = `${name}=${value ? "1" : "0"}; path=${path}; max-age=${BOOL_COOKIE_MAX_AGE}; SameSite=Lax${secure}`;
   }
 
   if (varsDetails) {
-    const savedOpen = readVarsDetailsOpenCookie();
+    const savedOpen = readBoolCookie(VARS_OPEN_COOKIE);
     if (savedOpen !== null) varsDetails.open = savedOpen;
     varsDetails.addEventListener("toggle", () => {
-      writeVarsDetailsOpenCookie(varsDetails.open);
+      writeBoolCookie(VARS_OPEN_COOKIE, varsDetails.open);
+    });
+  }
+
+  const footerToggle = document.getElementById("story-footer-visible");
+  const storyFooter = document.getElementById("story-footer");
+
+  function applyFooterVisibility(visible) {
+    document.body.classList.toggle("story-footer-hidden", !visible);
+    if (storyFooter) storyFooter.hidden = !visible;
+  }
+
+  if (footerToggle) {
+    const savedVisible = readBoolCookie(FOOTER_VISIBLE_COOKIE);
+    if (savedVisible !== null) footerToggle.checked = savedVisible;
+    applyFooterVisibility(footerToggle.checked);
+    footerToggle.addEventListener("change", () => {
+      applyFooterVisibility(footerToggle.checked);
+      writeBoolCookie(FOOTER_VISIBLE_COOKIE, footerToggle.checked);
     });
   }
 

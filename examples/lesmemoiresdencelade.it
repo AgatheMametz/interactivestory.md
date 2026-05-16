@@ -105,7 +105,7 @@ discours
     (clear)
     Elle se lève et se dirige vers eux.
     
-    "Chers amis, je suis fière de vous. Vous avez rendu le royaume des Asterales fiers. Mais cela n'a pas s..."
+    "Chers amis, je suis fière de vous. Vous avez rendu le royaume des Asterales fier. Mais cela n'a pas suff..."
 
     ## CLAC   
 
@@ -214,11 +214,21 @@ regarder_autour_de_vous
 pitié
     "Elphée, ma femme, je dois sauver ma femme. Vous êtes humains, vous aussi. Vous devez comprendre. Vous devez comprendre !!"
 
-    Dans votre émotion, vous vous aggripez à un des gardes. Les deux autres tournent leur lance vers vous, prêts à vous embrocher. 
+    (wait:1000)
+
+    Dans votre émotion, vous vous aggripez à un des gardes.
+    
+    (wait:3000)
+    
+    Les deux autres tournent leur lance vers vous, prêts à vous embrocher. 
 
     Vous mettez vos mains en l'air.
+
+    (wait:2000)
     
     Vous lisez dans les yeux du garde voleur de reliques une lueur de pitié.
+
+    (wait:2000)
     
     "Je suis désolé" dit-il lassement.
 
@@ -236,7 +246,15 @@ pitié
 regarder_autour_de_vous_pitie
     Ce garde qui vous regarde avec pitié a l'air moins dangereux que les autres. En entendant votre voix cassée par la douleur, son visage s'est déformé en une grimace. Il n'est clairement pas à l'aise avec ce qu'il est en train de faire.
 
-    Vous remarquez que il fait tomber une relique de ses bras. Le métal perce le silence dans ce couloir nu. $Il s'agit d'une dague maudite$.
+    (wait:2000)
+
+    Vous remarquez que il fait tomber une relique de ses bras.
+    
+    (wait:4000)
+    
+    Le bruit du métal sur la pierre perce le silence dans ce couloir nu. $Il s'agit d'une dague maudite$.
+
+    (wait:2000)
 
     (set: garde_pitie true)
 
@@ -247,12 +265,9 @@ regarder_autour_de_vous_pitie
 
 
 réfléchir_à_un_plan
-    Rien ne vous vient à l'esprit
+    Dans votre jeunesse, en mission spéciale, vous aviez eu l'idée brillante de vous rendre pour infiltrer le camp ennemi. Une idée impraticable aujourd'hui, étant donné que vous êtes déjà enchaîné.
 
-    (set: garde_pitie true)
-
-    (clear)
-        Vous continuez de marcher.
+    Malgré la situation, cette pensée vous provoque un rictus.
 
         (once)([Vérifier les chaînes](vérifier_chaînes))
         (if:pitié = false)([Regarder autour de vous](regarder_autour_de_vous))
@@ -272,11 +287,11 @@ prendre_relique
 
     (fx: invert true)
 
-    # Lorsque vous touchez la relique, une énergie étrangère vous traverse.
+    Lorsque vous touchez la relique, une énergie étrangère vous traverse.
 
     (wait: 3000)
 
-    # Cet objet est dangereux.
+    # Cette dague est dangereuse.
 
     (wait: 4000)
 
@@ -451,7 +466,7 @@ attaquer_garde
 
     Vous vous retournez et voyez les deux autres gardes qui se précipitent vers vous. L'un d'eux, un homme âgé avec une barbe tressée, vous hurle : "Rendez-vous !"
 
-        (once)([Tuer un deuxième garde](attaquer_garde_deuxième_garde))
+        (once)([Menacer le deuxième garde](attaquer_garde_deuxième_garde))
         (once)([Se libérer](se_liberer))
         (if: libre = true)([S'enfuir](se_mettre_à_courrir))
 
@@ -465,11 +480,12 @@ attaquer_garde_deuxième_garde
         (once)([Se libérer](se_liberer))
 
 tuer_deuxième_garde
-    Vous vous ruez sur lui et lui plantez votre dague dans le cœur.
+    (clear)
+    Vous vous ruez sur le deuxième garde et lui plantez votre dague dans le cœur.
 
     (set: nbr_gardes--)
 
-    (wait: 3000)
+    (wait: 4000)
 
     Encore à terre, vous tournez votre regard vers le dernier garde. Il s'agit d'un jeune homme, sans expérience. 
 
@@ -479,7 +495,7 @@ tuer_deuxième_garde
     
     "AAAH !"
 
-        (if: nbr_gardes = 1)([Tuer le dernier garde](tuer_dernier_garde))
+        [Tuer le dernier garde](tuer_dernier_garde)
         (once)([Se libérer](se_liberer))
         (if: libre = true)([S'enfuir](se_mettre_à_courrir))
 
@@ -660,3 +676,112 @@ mettre_un_grand_coup_dans_la_porte
     [Vous entrez dans la salle du trône.](salle_du_trone)(removelink)
 
 salle_du_trone
+    (clear)
+    (if: souvenir_elphee = true & souvenir_reine = false)(Votre premier instinct est de balayer la pièce du regard pour y trouver Elphée. Mais la pièce est vide.)
+
+    (if: souvenir_elphee = false & souvenir_reine = true)(Votre premier instinct est de balayer la pièce du regard pour y trouver la reine Prunelle. Mais la pièce est vide.)
+
+    La salle est méconnaissable. Le pouvoir de la dague a achevé de démolir ce que les Cylians ont détruit. 
+
+    Face à vous, ce qui reste de l'ancien trône de la reine Prunelle est dispersé sur le sol. Une odeur de brûlé vous prend le nez.
+    
+    Que faites-vous ?
+
+        (if: souvenir_elphee = true)([Chercher des indices](trone_elphee))
+        (if: souvenir_elphee = false)([Chercher des indices](trone_elphee_sansvisage))
+        [$Demander de l'aide à la dague$](demander_aide_a_la_dague_trone)
+
+
+trone_elphee_sansvisage
+    (clear)
+
+    Vous faites le tour de la salle.
+
+    (wait: 3000)
+
+    Lorsque vous vous retournez, vous tombez sur le corps d'une femme.
+
+    (if: souvenir_reine = true)(Il ne s'agit visiblement pas de la reine Prunelle.)
+
+    Après inspection, vous en arrivez à la conclusion qu'elle a reçu un coup fatal à la poitrine.
+
+trone_elphee
+    (clear)
+
+    Vous faites le tour de la salle.
+
+    (wait: 3000)
+
+    Lorsque vous vous retournez, vous tombez sur le corps de **Elphée**
+    
+    (wait: 3000)
+
+    Vous vous ruez vers son corps.
+
+        Que faites-vous ?
+
+        (once)([Essayer de la réveiller](essayer_de_la_reveiller))
+        (once)([Vérifier si elle est en vie](verifier_si_elle_est_encore_en_vie))
+
+
+essayer_de_la_reveiller
+    Elphée ne bouge pas.
+
+        (once)([Vérifier si elle est en vie](verifier_si_elle_est_encore_en_vie))
+
+verifier_si_elle_est_encore_en_vie
+    Vous vous approchez de son visage. Vous mettez vos oreilles sur son poitrail. Vous ne sentez pas de respiration.
+
+    Vous fondez en larmes. 
+    
+    [Vous vous raccrochez à son souvenir.](se_rappeler_de_vos_souvenirs_avec_elphee)
+    [Vous préférez vous éloigner le plus vite possible.](seloigner)
+
+se_rappeler_de_vos_souvenirs_avec_elphee
+    (clear)
+    Elphée, c'était cette jeune fille qui avait toujours le sourire. Née de parents paysants, la vie l'avait dotée d'une belle nature, ce qui avait conduit le **Duc Gontrant** à lui proposer de venir servir la famille royale au château. 
+
+    Tous les jours, les bras chargés de linges, elle faisait le trajet jusqu'aux appartements de la (à l'époque) **Princesse Prunelle**. Et tous les jours, elle croisait un jeune homme charmant, avec une fossette absolument dévastatrice. Ce jeune homme, c'était vous. 
+
+    Elle avait pas la langue dans sa poche, Elphée. Ce n'était pas la dernière lorsqu'il s'agissait de critiquer les gens de la cour et la famille royale. Mais elle leur vouait un respect quasi divin.
+    
+    Sous votre impulsion, elle bravait le couvre-feu pour passer la nuit au bord du **lac des Éveillés**. Elle avait la blague facile, et s'accomodait de votre air bougon. L'éclat de son rire vous détendait instantanément. 
+
+    Quelle émotion vous envahie ?
+
+        [De la tristesse](tristesse)
+        [De la colère](colère)
+
+
+tristesse
+    Votre coeur se sert en repensant à ces bons moments avec elle.
+    
+    Vous décidez que lui ferez honneur en laissant une place dans votre coeur pour le restant de vos jours. 
+
+    (goto: elphee_espoir)
+
+colère
+    Votre coeur explose en repensant à ces bons moments avec elle.
+    
+    Vous décidez que lui ferez honneur hurlant son prénom lorsque vous abattrez l'homme qui vous a empêché ce futur ensemble. 
+
+    (goto: elphee_espoir)
+
+elphee_espoir
+    Vous enfouissez votre visage dans vos mains. Vous avez le pouvoir de lui sauver la vie.
+    
+    (wait: 3000)
+
+    Que faites-vous ?
+
+        ([$La sauver grâce à la dague$](sauver_avec_la_dague))
+        [Ne pas la sauver et s'éloigner](seloigner)
+
+
+
+
+
+sauver_avec_la_dague
+
+
+seloigner
